@@ -155,7 +155,11 @@ function App() {
       setSignInError(e.message || "Sign-in failed");
     });
   };
-  const handleSignOut = () => window.__fbAuth?.signOut();
+  const handleSignOut = () => {
+    window.__fbAuth?.signOut();
+    localStorage.removeItem("nb-profile-v1");
+    setProfile(null);
+  };
 
   React.useEffect(() => {
     const onHash = () => setRoute(parseRoute());
