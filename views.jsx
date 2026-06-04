@@ -115,7 +115,6 @@ function QuizzesContent({ onTakeQuiz }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14, marginBottom: 32 }}>
           {[...QUIZZES_UPCOMING, ...userQuizzes].map((q) => {
             const s = subjectBy(q.subject) || SUBJECTS[0];
-            const deckId = deckForSubject(q.subject);
             return (
               <div key={q.id} className="sn-card" style={{ borderLeft: `3px solid ${s.color}`, cursor: "pointer" }}
                 onClick={() => window.location.hash = "#/quiz-detail/" + q.id}>
