@@ -146,111 +146,309 @@ function Onboarding({ onComplete }) {
   const stepLabels = ["About you", "Your school", "Your classes"];
 
   // ── Step 0 — Cover-page welcome (full-bleed frontispiece) ──
-  if (step === 0) {
-    return (
-      <div style={{
-        position: "fixed", inset: 0, zIndex: 500,
-        background: "var(--bg)",
-        fontFamily: "var(--f-ui, Geist, sans-serif)",
-        overflow: "hidden",
-      }}>
-        {/* Hairline double-frame */}
-        <div style={{ position: "absolute", inset: "min(44px, 4vmin)", border: "1px solid var(--rule)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", inset: "calc(min(44px, 4vmin) + 8px)", border: "1px solid var(--hairline)", pointerEvents: "none" }} />
+  const [mousePos, setMousePos] = React.useState({ x: -999, y: -999 });
+  const [btnHover, setBtnHover] = React.useState(null);
 
-        {/* Top eyebrow */}
+  if (step === 0) {
+    const WORD = "Notebook";
+    const featureCards = [
+      { icon: "✦", label: "Notes", desc: "Block-based editor with AI tools. Headings, quotes, checkboxes, and attachments — organized by unit." },
+      { icon: "◎", label: "Homework", desc: "Every assignment in one place. Urgency, due dates, time estimates. Never miss a deadline." },
+      { icon: "▤", label: "Schedule", desc: "Your daily and weekly view. See what's in session, what's due, and what's coming." },
+      { icon: "⟡", label: "Flashcards", desc: "Decks tied to your notes. Study with confidence tracking so you focus on what matters." },
+      { icon: "◈", label: "Grades", desc: "Letter grades with sparkline trends. Watch your progress build across the term." },
+      { icon: "✧", label: "AI Tools", desc: "Highlight any passage to explain it, generate a flashcard, or build a practice question." },
+    ];
+
+    return (
+      <div
+        onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
+        style={{
+          position: "fixed", inset: 0, zIndex: 500,
+          background: "var(--bg)",
+          fontFamily: "var(--f-ui, Geist, sans-serif)",
+          overflowY: "auto",
+          overflowX: "hidden",
+        }}
+      >
+        <style>{`
+          @keyframes nb-fade-up   { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes nb-letter    { from { opacity: 0; transform: translateY(12px) skewX(-4deg); } to { opacity: 1; transform: none; } }
+          @keyframes nb-draw-h    { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+          @keyframes nb-draw-v    { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+          @keyframes nb-grain     { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-1px,1px)} 50%{transform:translate(1px,-1px)} 75%{transform:translate(-1px,-1px)} }
+          .nb-btn-google { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+          .nb-btn-google:hover { transform: translateY(-2px); box-shadow: 0 6px 20px -4px rgba(160,120,48,0.45); }
+          .nb-btn-fresh  { transition: transform 0.18s ease; }
+          .nb-btn-fresh:hover  { transform: translateY(-2px); }
+          .nb-feat-card  { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; cursor: default; }
+          .nb-feat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px -10px rgba(20,16,11,0.18); border-color: var(--accent) !important; }
+        `}</style>
+
+        {/* Cursor spotlight */}
         <div style={{
-          position: "absolute", top: "min(92px, 11vmin)", left: 0, right: 0,
-          textAlign: "center",
-          fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.32em",
-          textTransform: "uppercase", color: "var(--ink-3)",
-        }}>
-          — A Notebook —
+          position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1,
+          background: `radial-gradient(420px circle at ${mousePos.x}px ${mousePos.y}px, rgba(160,120,48,0.055) 0%, transparent 70%)`,
+          transition: "background 0.12s ease",
+        }} />
+
+        {/* Animated grain overlay */}
+        <div style={{
+          position: "fixed", inset: 0, pointerEvents: "none", zIndex: 2,
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E\")",
+          animation: "nb-grain 0.9s steps(1) infinite",
+        }} />
+
+        {/* ── HERO (100vh) ── */}
+        <div style={{ position: "relative", height: "100vh", minHeight: 600 }}>
+          {/* Animated hairline double-frame */}
+          {["min(44px,4vmin)", "calc(min(44px,4vmin) + 8px)"].map((inset, fi) => (
+            <div key={fi} style={{ position: "absolute", inset, pointerEvents: "none", overflow: "hidden" }}>
+              {/* top */}
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "var(--rule)", transformOrigin: "left", animation: `nb-draw-h ${0.6 + fi * 0.1}s ${0.2 + fi * 0.1}s cubic-bezier(0.4,0,0.2,1) both` }} />
+              {/* bottom */}
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: "var(--rule)", transformOrigin: "right", animation: `nb-draw-h ${0.6 + fi * 0.1}s ${0.4 + fi * 0.1}s cubic-bezier(0.4,0,0.2,1) both` }} />
+              {/* left */}
+              <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 1, background: "var(--rule)", transformOrigin: "top", animation: `nb-draw-v ${0.6 + fi * 0.1}s ${0.3 + fi * 0.1}s cubic-bezier(0.4,0,0.2,1) both` }} />
+              {/* right */}
+              <div style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: 1, background: "var(--rule)", transformOrigin: "bottom", animation: `nb-draw-v ${0.6 + fi * 0.1}s ${0.5 + fi * 0.1}s cubic-bezier(0.4,0,0.2,1) both` }} />
+            </div>
+          ))}
+
+          {/* Page number — top right corner */}
+          <div style={{
+            position: "absolute", top: "min(56px, 7vmin)", right: "min(68px, 6vw)",
+            fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.22em",
+            textTransform: "uppercase", color: "var(--ink-3)",
+            animation: "nb-fade-up 0.5s 0.9s both",
+          }}>
+            Vol. I · MMXXVI
+          </div>
+
+          {/* Top eyebrow */}
+          <div style={{
+            position: "absolute", top: "min(92px, 11vmin)", left: 0, right: 0,
+            textAlign: "center",
+            fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.32em",
+            textTransform: "uppercase", color: "var(--ink-3)",
+            animation: "nb-fade-up 0.5s 0.3s both",
+          }}>
+            — A Notebook —
+          </div>
+
+          {/* Hero center */}
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            padding: "0 32px",
+          }}>
+            {/* Letter-reveal wordmark */}
+            <div style={{
+              fontFamily: '"Instrument Serif", "Source Serif 4", Georgia, serif',
+              fontSize: "clamp(100px, 17vw, 230px)", lineHeight: 0.9,
+              fontStyle: "italic", color: "var(--ink)", letterSpacing: "-0.03em",
+              display: "flex",
+            }}>
+              {WORD.split("").map((ch, i) => (
+                <span key={i} style={{
+                  display: "inline-block",
+                  animation: `nb-letter 0.55s ${0.55 + i * 0.06}s cubic-bezier(0.2,0.8,0.2,1) both`,
+                }}>{ch}</span>
+              ))}
+            </div>
+
+            {/* Tagline */}
+            <div style={{
+              marginTop: 20,
+              fontFamily: "var(--f-display)", fontSize: 17, color: "var(--ink-2)",
+              fontStyle: "italic", textAlign: "center",
+              animation: "nb-fade-up 0.6s 1.2s both",
+            }}>
+              A second brain for high school.
+            </div>
+
+            {/* Rule + provenance */}
+            <div style={{
+              marginTop: 32, display: "flex", alignItems: "center", gap: 22,
+              fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.2em",
+              textTransform: "uppercase", color: "var(--ink-3)",
+              animation: "nb-fade-up 0.6s 1.35s both",
+            }}>
+              <span style={{ width: 64, height: 1, background: "var(--rule)" }} />
+              kept by you
+              <span style={{ width: 64, height: 1, background: "var(--rule)" }} />
+            </div>
+
+            {/* Actions */}
+            <div style={{
+              marginTop: 52, display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center",
+              animation: "nb-fade-up 0.6s 1.5s both",
+            }}>
+              <button
+                className="nb-btn-google"
+                onClick={handleGoogleSignIn}
+                disabled={signingIn}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "15px 26px", borderRadius: 2,
+                  border: "1px solid var(--accent)", background: "var(--accent)",
+                  fontFamily: "inherit", fontSize: 14.5, color: "var(--bg)",
+                  fontWeight: 500, cursor: signingIn ? "default" : "pointer",
+                  opacity: signingIn ? 0.6 : 1,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                {signingIn ? "Loading your account…" : "Continue with Google"}
+              </button>
+
+              <button
+                className="nb-btn-fresh"
+                onClick={() => setStep(1)}
+                style={{
+                  padding: "15px 26px", borderRadius: 2,
+                  border: "1px solid var(--ink)", background: "transparent",
+                  fontFamily: "inherit", fontSize: 14.5, color: "var(--ink)",
+                  cursor: "pointer",
+                }}
+              >
+                Open a fresh notebook →
+              </button>
+            </div>
+
+            {signInError && (
+              <div style={{ marginTop: 18, fontSize: 11.5, color: "var(--accent)", fontFamily: "var(--f-mono)", padding: "8px 12px", background: "var(--accent-soft)", borderRadius: 6, maxWidth: 380, textAlign: "center" }}>
+                {signInError}
+              </div>
+            )}
+
+            {/* Scroll hint */}
+            <div style={{
+              marginTop: 48,
+              fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.18em",
+              textTransform: "uppercase", color: "var(--ink-3)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+              animation: "nb-fade-up 0.6s 1.8s both",
+            }}>
+              <span>What's inside</span>
+              <span style={{ fontSize: 16 }}>↓</span>
+            </div>
+          </div>
+
+          {/* Colophon */}
+          <div style={{
+            position: "absolute", bottom: "min(78px, 9vmin)", left: 0, right: 0,
+            textAlign: "center",
+            fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.18em",
+            textTransform: "uppercase", color: "var(--ink-3)",
+            animation: "nb-fade-up 0.5s 1.6s both",
+          }}>
+            2026 School Year · printed for one reader
+          </div>
         </div>
 
-        {/* Hero center */}
+        {/* ── FEATURE SHOWCASE ── */}
         <div style={{
-          position: "absolute", inset: 0,
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          padding: "0 32px",
+          borderTop: "1px solid var(--rule)",
+          padding: "80px min(80px, 8vw) 100px",
+          background: "var(--bg)",
+          position: "relative",
         }}>
-          <div style={{
-            fontFamily: '"Instrument Serif", "Source Serif 4", Georgia, serif',
-            fontSize: "clamp(120px, 17vw, 240px)", lineHeight: 0.9,
-            fontStyle: "italic", color: "var(--ink)", letterSpacing: "-0.03em",
-          }}>
-            Notebook
-          </div>
-          <div style={{
-            marginTop: 18,
-            fontFamily: "var(--f-display)", fontSize: 16, color: "var(--ink-2)",
-            fontStyle: "italic", textAlign: "center",
-          }}>
-            for classes, work, and what you came here to learn
+          {/* Section header */}
+          <div style={{ textAlign: "center", marginBottom: 60 }}>
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, letterSpacing: "0.28em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 16 }}>
+              Everything you need
+            </div>
+            <div style={{
+              fontFamily: '"Instrument Serif", "Source Serif 4", Georgia, serif',
+              fontStyle: "italic", fontSize: "clamp(36px, 5vw, 56px)", lineHeight: 1.05,
+              color: "var(--ink)", letterSpacing: "-0.02em",
+            }}>
+              One notebook for every class.
+            </div>
           </div>
 
-          {/* Rule + author */}
+          {/* Feature grid */}
           <div style={{
-            marginTop: 38, display: "flex", alignItems: "center", gap: 22,
-            fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.2em",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: 18,
+            maxWidth: 1100,
+            margin: "0 auto",
+          }}>
+            {featureCards.map((f, i) => (
+              <div key={f.label} className="nb-feat-card" style={{
+                padding: "28px 28px 26px",
+                border: "1px solid var(--hairline)",
+                borderRadius: 8,
+                background: "var(--surface)",
+              }}>
+                <div style={{
+                  fontFamily: "var(--f-display)", fontSize: 24, color: "var(--accent)",
+                  marginBottom: 14, lineHeight: 1,
+                }}>{f.icon}</div>
+                <div style={{ fontFamily: "var(--f-display)", fontSize: 20, marginBottom: 8, color: "var(--ink)" }}>{f.label}</div>
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, color: "var(--ink-2)" }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom CTA */}
+          <div style={{ textAlign: "center", marginTop: 72 }}>
+            <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 18, color: "var(--ink-2)", marginBottom: 24 }}>
+              Ready to start?
+            </div>
+            <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                className="nb-btn-google"
+                onClick={handleGoogleSignIn}
+                disabled={signingIn}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "14px 24px", borderRadius: 2,
+                  border: "1px solid var(--accent)", background: "var(--accent)",
+                  fontFamily: "inherit", fontSize: 14, color: "var(--bg)",
+                  fontWeight: 500, cursor: signingIn ? "default" : "pointer",
+                  opacity: signingIn ? 0.6 : 1,
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </button>
+              <button
+                className="nb-btn-fresh"
+                onClick={() => setStep(1)}
+                style={{
+                  padding: "14px 24px", borderRadius: 2,
+                  border: "1px solid var(--ink)", background: "transparent",
+                  fontFamily: "inherit", fontSize: 14, color: "var(--ink)",
+                  cursor: "pointer",
+                }}
+              >
+                Open a fresh notebook →
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom colophon */}
+          <div style={{
+            marginTop: 72, textAlign: "center",
+            fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.18em",
             textTransform: "uppercase", color: "var(--ink-3)",
           }}>
-            <span style={{ width: 80, height: 1, background: "var(--rule)" }} />
-            kept by you
-            <span style={{ width: 80, height: 1, background: "var(--rule)" }} />
+            <span style={{ marginRight: 12 }}>—</span>
+            Notebook · Vol. I · Anno MMXXVI
+            <span style={{ marginLeft: 12 }}>—</span>
           </div>
-
-          {/* Actions */}
-          <div style={{ marginTop: 58, display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={signingIn}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "14px 22px", borderRadius: 2,
-                border: "1px solid var(--accent)", background: "var(--accent)",
-                fontFamily: "inherit", fontSize: 14, color: "var(--bg)",
-                fontWeight: 500, cursor: signingIn ? "default" : "pointer",
-                opacity: signingIn ? 0.6 : 1, transition: "opacity 0.15s",
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              {signingIn ? "Loading your account…" : "Continue with Google"}
-            </button>
-
-            <button
-              onClick={() => setStep(1)}
-              style={{
-                padding: "14px 22px", borderRadius: 2,
-                border: "1px solid var(--ink)", background: "transparent",
-                fontFamily: "inherit", fontSize: 14, color: "var(--ink)",
-                cursor: "pointer",
-              }}
-            >
-              Open a fresh notebook →
-            </button>
-          </div>
-
-          {signInError && (
-            <div style={{ marginTop: 18, fontSize: 11.5, color: "var(--accent)", fontFamily: "var(--f-mono)", padding: "8px 12px", background: "var(--accent-soft)", borderRadius: 6, maxWidth: 380, textAlign: "center" }}>
-              {signInError}
-            </div>
-          )}
-        </div>
-
-        {/* Colophon */}
-        <div style={{
-          position: "absolute", bottom: "min(78px, 9vmin)", left: 0, right: 0,
-          textAlign: "center",
-          fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.18em",
-          textTransform: "uppercase", color: "var(--ink-3)",
-        }}>
-          Anno MMXXVI · printed for one reader
         </div>
       </div>
     );
