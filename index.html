@@ -158,7 +158,7 @@ function App() {
   const handleSignOut = () => {
     window.__fbAuth?.signOut();
     localStorage.removeItem("nb-profile-v1");
-    setProfile(null);
+    window.location.reload();
   };
 
   React.useEffect(() => {
