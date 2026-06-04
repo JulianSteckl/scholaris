@@ -1,5 +1,8 @@
 // Dashboard variations
 
+// Pull editorial visual components from window (loaded in visuals.jsx)
+const { SubjectGlyph, Ornament, HatchBar, TallyMarks, TimeOfDayArc, DropFolio, WatermarkGlyph, StreakMatrix, Stamp } = window;
+
 function greetingFor(d = new Date()) {
   const h = d.getHours();
   if (h < 5)  return "Up late,";
@@ -7,26 +10,6 @@ function greetingFor(d = new Date()) {
   if (h < 17) return "Good afternoon,";
   if (h < 21) return "Good evening,";
   return "Late night,";
-}
-
-// Diagonal ink-hatch progress bar with end tick
-function HatchBar({ id, pct, color }) {
-  const patId = "nb-hatch-" + (id || "x").replace(/[^a-z0-9]/gi, "-");
-  const w = Math.max(0, Math.min(100, pct || 0));
-  return (
-    <svg width="100%" height="6" style={{ display: "block", overflow: "visible" }}>
-      <defs>
-        <pattern id={patId} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="5" stroke={color} strokeWidth="1.8" strokeOpacity="0.65"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="6" fill="var(--bg-2)" rx="1.5"/>
-      {w > 0 && <rect width={w + "%"} height="6" fill={"url(#" + patId + ")"} rx="1.5"/>}
-      {w > 2 && w < 99 && (
-        <rect x={w + "%"} y="0" width="2" height="6" fill={color} transform="translate(-1, 0)"/>
-      )}
-    </svg>
-  );
 }
 
 // ── Dashboard customizer ──
@@ -260,7 +243,7 @@ Give ${userName} a sharp, specific game plan for TODAY — what to do right now 
         const quiz = QUIZZES_UPCOMING[0];
         const items = [
           ...urgent.map(h => `- Start with ${subjectBy(h.subject).short}: "${h.title}" — it's due ${h.due}`),
-          ...rest.map(h => `- Then tackle ${subjectBy(h.subject).short}: "${h.title}"${h.est && h.est !== "—" ? ` (${h.est})` : ""}`),
+          ...rest.map(h => `- Then tackle ${subjectBy(h.subject).short}: "${h.title}" (${h.est})`),
           quiz ? `- Spend 15 min reviewing for ${subjectBy(quiz.subject).short} quiz on ${quiz.when}` : null,
         ].filter(Boolean).slice(0, 5);
         text = items.length ? items.join("\n") : "- Review your notes and plan out your evening";
@@ -438,145 +421,11 @@ function Dashboard({ variant = "combined", density = "default", view = "cards" }
 
 // ─────────────── Variant C: "Combined" — everything on one screen
 
-
-// ─────────────── Header aside widget ──────────────────────────────────────────
-
-function DashHeaderWidget({ variant, allHW, allQuizzes, sched }) {
-  if (!variant || variant === "none") return null;
-
-  if (variant === "stats") {
-    const open = allHW.filter(h => !h.done).length;
-    const { streak } = nbGetStreakData();
-    const stats = [
-      { n: open,              label: "open tasks"    },
-      { n: allQuizzes.length, label: "quizzes ahead" },
-      { n: streak,            label: "day streak", prefix: "✶" },
-    ];
-    return (
-      <div style={{ display: "flex", gap: 0, alignItems: "flex-end" }}>
-        {stats.map((s, i) => (
-          <div key={i} style={{
-            display: "flex", flexDirection: "column", alignItems: "flex-end",
-            paddingLeft: i > 0 ? 26 : 0,
-            borderLeft: i > 0 ? "1px solid var(--hairline)" : "none",
-            marginLeft: i > 0 ? 26 : 0,
-          }}>
-            <div style={{ fontFamily: "var(--f-display)", fontSize: 34, lineHeight: 1, color: "var(--ink)" }}>
-              {s.prefix && <span style={{ fontSize: 13, color: "var(--accent)", marginRight: 3, fontStyle: "italic" }}>{s.prefix}</span>}
-              {s.n}
-            </div>
-            <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 4 }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (variant === "timeline") {
-    const schedule = sched.schedule.filter(p => p.subject && p.time && p.end);
-    const now = new Date();
-    const nowMins = now.getHours() * 60 + now.getMinutes();
-    const startH = 7, endH = 17, range = (endH - startH) * 60;
-    const toPos = (t) => {
-      if (!t || t === "—") return null;
-      const parts = t.split(":");
-      const h = parseInt(parts[0]); const m = parseInt(parts[1] || 0);
-      return Math.max(0, Math.min(100, ((h * 60 + m) - startH * 60) / range * 100));
-    };
-    const nowPct = Math.max(0, Math.min(100, (nowMins - startH * 60) / range * 100));
-    return (
-      <div style={{ width: 340, alignSelf: "flex-end" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 7 }}>
-          <span>7 AM</span>
-          <span style={{ letterSpacing: "0.12em" }}>TODAY</span>
-          <span>5 PM</span>
-        </div>
-        <div style={{ position: "relative", height: 28, background: "var(--bg-2)", borderRadius: 4, overflow: "hidden" }}>
-          {schedule.map((p, i) => {
-            const s = toPos(p.time); const e = toPos(p.end);
-            if (s === null || e === null || e <= s) return null;
-            const sb = subjectBy(p.subject);
-            const isNow = i === sched.nowIdx;
-            return (
-              <div key={i} title={sb.name} style={{
-                position: "absolute", left: s + "%", width: (e - s) + "%",
-                top: 0, bottom: 0,
-                background: isNow ? sb.color : sb.color + "55",
-                borderRight: "1px solid var(--bg)",
-                display: "flex", alignItems: "center", overflow: "hidden",
-              }}>
-                <span style={{ fontFamily: "var(--f-mono)", fontSize: 9, padding: "0 5px", color: isNow ? "#fff" : "rgba(255,255,255,0.7)", whiteSpace: "nowrap" }}>{sb.short}</span>
-              </div>
-            );
-          })}
-          {nowPct >= 0 && nowPct <= 100 && (
-            <div style={{ position: "absolute", left: "calc(" + nowPct + "% - 1px)", top: 0, bottom: 0, width: 2, background: "var(--ink-2)", zIndex: 2 }} />
-          )}
-          {schedule.length === 0 && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)" }}>
-              No schedule set — add classes to see them here
-            </div>
-          )}
-        </div>
-        <div style={{ display: "flex", gap: 12, marginTop: 6, flexWrap: "wrap" }}>
-          {schedule.slice(0, 5).map((p, i) => {
-            const sb = subjectBy(p.subject);
-            const isNow = i === sched.nowIdx;
-            return (
-              <span key={i} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--f-mono)", fontSize: 9, color: isNow ? "var(--ink-2)" : "var(--ink-3)" }}>
-                <span style={{ width: 6, height: 6, borderRadius: 1, background: sb.color, flexShrink: 0, display: "inline-block" }} />
-                {sb.short}{isNow ? " · now" : ""}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  if (variant === "focus") {
-    const urgent = allHW.filter(h => !h.done && h.urgent)[0];
-    const next = allHW.filter(h => !h.done)[0];
-    const item = urgent || next;
-    const sb = item ? subjectBy(item.subject) : null;
-    if (!item) {
-      return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, alignSelf: "flex-end" }}>
-          <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em" }}>Focus</div>
-          <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 20, color: "var(--ink-3)" }}>You're all clear.</div>
-        </div>
-      );
-    }
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5, alignSelf: "flex-end", borderRight: "3px solid " + (sb ? sb.color : "var(--accent)"), paddingRight: 14 }}>
-        <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em" }}>
-          {urgent ? "⚠ Most urgent" : "Up first"}
-        </div>
-        <div style={{ fontFamily: "var(--f-display)", fontSize: 20, lineHeight: 1.2, textAlign: "right", color: urgent ? "var(--accent)" : "var(--ink)", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {item.title}
-        </div>
-        <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", display: "flex", alignItems: "center", gap: 6 }}>
-          {sb && <span style={{ width: 6, height: 6, borderRadius: 1, background: sb.color, display: "inline-block" }} />}
-          {sb ? sb.short + " · due " + item.due : "due " + item.due}
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
-function DashCombined({ view, headerWidget = "stats" }) {
+function DashCombined({ view }) {
   const store = useNbStore(); // re-renders on every store change
   const allHW = React.useMemo(() => [...HOMEWORK, ...store.homework], [store.homework]);
   const allQuizzes = React.useMemo(() => [...QUIZZES_UPCOMING, ...nbGetQuizzes()], [store.homework]);
-  const now = new Date();
-  const todayMidnight = new Date(now); todayMidnight.setHours(0, 0, 0, 0);
-  const todayHW = allHW.filter((h) => {
-    if (h.done) return false;
-    const d = dueStringToDate(h.due, now);
-    return d ? d <= todayMidnight : false;
-  }).slice(0, 4);
+  const todayHW = allHW.filter((h) => !h.done).slice(0, 4);
   const openCount = allHW.filter((h) => !h.done).length;
   const quizCount = allQuizzes.length;
 
@@ -631,7 +480,6 @@ function DashCombined({ view, headerWidget = "stats" }) {
             <button className="sn-btn primary" onClick={() => window.dispatchEvent(new CustomEvent("openQuickAdd", { detail: { type: "homework" } }))}>+ Add</button>
           </>
         }
-        aside={<DashHeaderWidget variant={headerWidget} allHW={allHW} allQuizzes={allQuizzes} sched={sched} />}
       />
 
       {/* Customizer panel */}
@@ -698,31 +546,38 @@ function DashCombined({ view, headerWidget = "stats" }) {
         // Right-side content: countdown or next-day summary
         const nextDayHW = allHW.filter(h => !h.done).slice(0, 2);
         return (
-          <div className="sn-card" style={{ display: "flex", gap: 18, alignItems: "stretch", marginBottom: 20 }}>
+          <div className="sn-card hero-watermark-card" style={{ display: "flex", gap: 22, alignItems: "stretch", marginBottom: 20, padding: "22px 24px", "--c": featuredColor }}>
+            {/* Watermark glyph */}
+            {subjId && <div className="watermark"><SubjectGlyph subject={featured.subject} size={260} color="currentColor" /></div>}
             <div style={{ width: 6, borderRadius: 3, background: featuredColor }}></div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)" }}>{eyebrow}</div>
-              <h2 className="serif" style={{ fontFamily: "var(--f-display)", fontSize: 28, margin: "4px 0 4px", display: "flex", alignItems: "center", gap: 10 }}>
-                {subjId && <SubjectGlyph id={subjId} size={22} color={featuredColor} />}
-                <span>{featuredLabel}{featured.note ? <span style={{ fontStyle: "italic", color: "var(--ink-3)" }}> — {featured.note}</span> : ""}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {subjId && <SubjectGlyph subject={featured.subject} size={16} color={featuredColor} />}
+                <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)" }}>{eyebrow}</div>
+              </div>
+              <h2 className="serif" style={{ fontFamily: "var(--f-display)", fontSize: 32, margin: "6px 0 4px", letterSpacing: "-0.015em" }}>
+                {featuredLabel}{featured.note ? <span style={{ fontStyle: "italic", color: "var(--ink-3)" }}> — {featured.note}</span> : ""}
               </h2>
-              <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
                 {chips.length > 0
                   ? chips.slice(0, 4).map((c, i) => <span key={i} className={`chip${c.warn ? " warn" : ""}`}>{c.label}</span>)
                   : <span style={{ fontFamily: "var(--f-mono)", fontSize: 11, color: "var(--ink-3)" }}>No homework or quizzes for this class</span>
                 }
               </div>
             </div>
-            <div style={{ alignSelf: "center", textAlign: "right", flexShrink: 0 }}>
+            <div style={{ alignSelf: "center", textAlign: "right", flexShrink: 0, display: "flex", alignItems: "center", gap: 14 }}>
               {countdownNum != null ? (
                 <>
-                  <div style={{ fontFamily: "var(--f-display)", fontSize: 56, color: "var(--ink)", lineHeight: 1 }}>
-                    {countdownNum}<span style={{ fontSize: 18, color: "var(--ink-3)" }}>m</span>
+                  <TimeOfDayArc size={72} color={featuredColor} />
+                  <div>
+                    <div style={{ fontFamily: "var(--f-display)", fontSize: 60, color: "var(--ink)", lineHeight: 0.85, fontStyle: "italic", letterSpacing: "-0.03em" }}>
+                      {countdownNum}<span style={{ fontSize: 18, color: "var(--ink-3)", fontStyle: "normal", fontFamily: "var(--f-mono)" }}>m</span>
+                    </div>
+                    <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 4 }}>{countdownLbl}</div>
                   </div>
-                  <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 2 }}>{countdownLbl}</div>
                 </>
               ) : (
-                <>
+                <div>
                   <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Tomorrow</div>
                   {nextDayHW.length > 0
                     ? nextDayHW.map((h, i) => {
@@ -730,13 +585,13 @@ function DashCombined({ view, headerWidget = "stats" }) {
                         return (
                           <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end", marginBottom: 4 }}>
                             <span style={{ fontFamily: "var(--f-mono)", fontSize: 11, color: "var(--ink-2)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.title}</span>
-                            <span style={{ width: 7, height: 7, borderRadius: 2, background: sb.color, flexShrink: 0 }}></span>
+                            <SubjectGlyph subject={sb} size={12} color={sb.color} />
                           </div>
                         );
                       })
                     : <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 14 }}>Clear ahead</div>
                   }
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -803,11 +658,9 @@ function DashCombined({ view, headerWidget = "stats" }) {
             </h3>
             <div>
               {schedule.length === 0
-                ? <div style={{ padding: "14px 0 8px" }}>
-                    <div style={{ fontSize: 22, marginBottom: 6 }}>🗓️</div>
-                    <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-2)", fontSize: 14, marginBottom: 4 }}>No schedule set up yet</div>
-                    <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", marginBottom: 8 }}>Add your class times to unlock the full dashboard.</div>
-                    <a onClick={() => window.dispatchEvent(new CustomEvent("openScheduleEditor"))} style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--accent)", cursor: "pointer", textDecoration: "none" }}>Set up your schedule →</a>
+                ? <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "18px 0", color: "var(--ink-3)" }}>
+                    <span style={{ fontSize: 18 }}>🗓️</span>
+                    <span style={{ fontSize: 13 }}>No events today · <a onClick={() => window.dispatchEvent(new CustomEvent("openScheduleEditor"))} style={{ color: "var(--accent)", cursor: "pointer", textDecoration: "none" }}>Edit your schedule →</a></span>
                   </div>
                 : schedule.map((row, i) => {
                     const sb = row.subject ? subjectBy(row.subject) : null;
@@ -838,20 +691,10 @@ function DashCombined({ view, headerWidget = "stats" }) {
           {W("recent-notes") && <div className="sn-card">
             <h3 className="sn-card-title"><span>Recent notes</span><a className="mono" onClick={() => window.location.hash = "#/notes"} style={{ color: "var(--ink-2)", fontSize: 10.5, textDecoration: "none", cursor: "pointer" }}>OPEN →</a></h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {RECENT_NOTES.length === 0 && (() => {
-                const firstSubject = SUBJECTS[0];
-                return (
-                  <div style={{ padding: "14px 0 8px", color: "var(--ink-3)" }}>
-                    <div style={{ fontSize: 22, marginBottom: 6 }}>📝</div>
-                    <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-2)", fontSize: 14, marginBottom: 4 }}>No notes yet</div>
-                    {firstSubject && (
-                      <a onClick={() => window.location.hash = "#/subject/" + firstSubject.id} style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--accent)", cursor: "pointer", textDecoration: "none" }}>
-                        Start with {firstSubject.short} →
-                      </a>
-                    )}
-                  </div>
-                );
-              })()}
+              {RECENT_NOTES.length === 0 && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "18px 0", color: "var(--ink-3)" }}>
+                <span style={{ fontSize: 18 }}>📝</span>
+                <span style={{ fontSize: 13 }}>No recent notes · <a onClick={() => onNav && onNav("notes")} style={{ color: "var(--accent)", cursor: "pointer", textDecoration: "none" }}>Open a subject to start writing →</a></span>
+              </div>}
               {RECENT_NOTES.slice(0, 3).map((n) => {
                 const sb = subjectBy(n.subject);
                 return (
@@ -872,42 +715,30 @@ function DashCombined({ view, headerWidget = "stats" }) {
         {/* Col 3 — Streak + Subjects mini-grid */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {W("streak") && (() => {
-            const { streak, best } = nbGetStreakData();
-            const milestoneMsg = streak >= 30 ? "30-day streak — legendary! 🏆"
-              : streak >= 14 ? "2-week streak — unstoppable!"
-              : streak >= 7  ? "One full week — great work!"
-              : streak >= 3  ? `${streak}-day streak — keep it up!`
-              : streak === 1 ? "Day 1 — every streak starts here."
-              : null;
+            const streak = nbGetStreak();
             return (
             <div className="sn-card">
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <span style={{ color: "var(--accent)" }}>{Ico.flame}</span>
                 <span className="mono" style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)" }}>Study streak</span>
               </div>
-              <div style={{ fontFamily: "var(--f-display)", fontSize: 44, lineHeight: 1, color: "var(--ink)" }}>{streak}<span style={{ fontSize: 15, color: "var(--ink-3)" }}> day{streak !== 1 ? "s" : ""}</span></div>
-              {milestoneMsg && (
-                <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--accent)", marginTop: 4, letterSpacing: "0.02em" }}>{milestoneMsg}</div>
-              )}
-              {best > streak && (
-                <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>Best: {best} day{best !== 1 ? "s" : ""}</div>
-              )}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 12 }}>
-                {Array.from({ length: 28 }).map((_, i) => {
-                  const studied = i < streak;
-                  const isToday = i === streak;
-                  return (
-                    <div key={i} style={{
-                      width: isToday ? 14 : 11, height: isToday ? 14 : 11,
-                      borderRadius: "50%", flexShrink: 0,
-                      background: studied ? "var(--accent)" : isToday ? "var(--accent-ink)" : "var(--hairline)",
-                    }} />
-                  );
-                })}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                <DropFolio number={streak} size={52} color="var(--ink)" />
+                <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 16, color: "var(--ink-3)" }}>
+                  day{streak !== 1 ? "s" : ""} running
+                </div>
               </div>
-              <div style={{ display: "flex", gap: 12, fontFamily: "var(--f-mono)", fontSize: 9.5, marginTop: 8, color: "var(--ink-3)", alignItems: "center" }}>
-                <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", marginRight: 4, verticalAlign: "middle" }} />Studied</span>
-                <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "var(--accent-ink)", marginRight: 4, verticalAlign: "middle" }} />Today</span>
+              <div className="streak-matrix-frame" style={{ marginTop: 14 }}>
+                <StreakMatrix streak={streak} weeks={12} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--f-mono)", fontSize: 9.5, marginTop: 8, color: "var(--ink-3)" }}>
+                <span>12 weeks ago</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "var(--accent)" }} />
+                  studied
+                  <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, border: "1.5px solid var(--ink)", marginLeft: 6 }} />
+                  today
+                </span>
               </div>
             </div>
             );
@@ -915,21 +746,21 @@ function DashCombined({ view, headerWidget = "stats" }) {
 
           {W("subject-progress") && <div className="sn-card">
             <h3 className="sn-card-title"><span>This week, by subject</span></h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
               {SUBJECTS.slice(0, 6).map((sb) => {
                 const open = allHW.filter((h) => h.subject === sb.id && !h.done).length;
                 const total = allHW.filter((h) => h.subject === sb.id).length;
                 const pct = total ? (1 - open / total) * 100 : 100;
                 return (
-                  <div key={sb.id} style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 10, alignItems: "center" }}>
-                    <SubjectGlyph id={sb.id} size={14} color={sb.color} />
+                  <div key={sb.id} style={{ display: "grid", gridTemplateColumns: "18px 1fr auto", gap: 10, alignItems: "center" }}>
+                    <SubjectGlyph subject={sb} size={16} color={sb.color} />
                     <div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
                         <span>{sb.name}</span>
                         <span className="mono" style={{ fontSize: 10.5, color: "var(--ink-3)" }}>{total - open}/{total || "—"}</span>
                       </div>
                       <div style={{ marginTop: 4 }}>
-                        <HatchBar id={sb.id} pct={pct} color={sb.color} />
+                        <HatchBar pct={pct} color={sb.color} height={7} />
                       </div>
                     </div>
                   </div>
@@ -1100,14 +931,14 @@ function DashFocus({ view }) {
                     <div key={i} style={{
                       width: isToday ? 16 : 13, height: isToday ? 16 : 13,
                       borderRadius: "50%", flexShrink: 0,
-                      background: studied ? "var(--accent)" : isToday ? "var(--accent-ink)" : "var(--hairline)",
+                      background: studied ? "var(--accent)" : isToday ? "var(--ochre)" : "var(--hairline)",
                     }} />
                   );
                 })}
               </div>
               <div style={{ display: "flex", gap: 12, fontFamily: "var(--f-mono)", fontSize: 9.5, marginTop: 8, color: "var(--ink-3)", alignItems: "center" }}>
                 <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", marginRight: 4, verticalAlign: "middle" }} />Studied</span>
-                <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "var(--accent-ink)", marginRight: 4, verticalAlign: "middle" }} />Today</span>
+                <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "var(--ochre)", marginRight: 4, verticalAlign: "middle" }} />Today</span>
               </div>
             </div>
             );
@@ -1243,4 +1074,4 @@ function DashTimeline({ view }) {
   );
 }
 
-Object.assign(window, { Dashboard, DashCombined, DashFocus, DashTimeline, DashHeaderWidget, dueStringToDate });
+Object.assign(window, { Dashboard, DashCombined, DashFocus, DashTimeline, dueStringToDate });

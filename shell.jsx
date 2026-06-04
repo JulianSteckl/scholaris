@@ -9,7 +9,6 @@ const Ico = {
   cal:     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M2 6h12M5 2v3M11 2v3"/></svg>,
   cards:   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="9" height="10" rx="1"/><path d="M5 2h9v10"/></svg>,
   grade:   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 2l1.8 4 4.2.5-3 2.9.8 4.1L8 11.7 4.2 13.5 5 9.4 2 6.5 6.2 6 8 2z"/></svg>,
-  tools:   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>,
   file:    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h6l4 4v8H3V2zM9 2v4h4"/></svg>,
   search:  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>,
   plus:    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 3v10M3 8h10"/></svg>,
@@ -24,112 +23,6 @@ const Ico = {
   list:    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h8M5 8h8M5 12h8M2.5 4h.1M2.5 8h.1M2.5 12h.1"/></svg>,
 };
 
-// Subject monogram glyphs — maps subject ID patterns to editorial SVG marks
-function SubjectGlyph({ id = "", size = 14, color = "currentColor" }) {
-  const s = id.toLowerCase();
-  const isLit  = /lit|eng(?!ineer)|poetry|rhetoric/.test(s);
-  const isBio  = /\bbio/.test(s);
-  const isMath = /math|alg|calc|stat|trig/.test(s);
-  const isHist = /hist|gov|civics|social/.test(s);
-  const isChem = /chem/.test(s);
-  const isArt  = /\bart\b|draw|paint|studio|design/.test(s);
-  const isLang = /span|french|german|japanese|latin|italian|arabic|chinese/.test(s);
-  const isPhys = /\bphys/.test(s);
-  const isCS   = /\bcs\b|compsci|program|coding|tech/.test(s);
-
-  const v = "0 0 16 16";
-  const p = { fill: "none", stroke: color, strokeLinecap: "round", strokeLinejoin: "round" };
-
-  // ¶ Pilcrow for literature / English
-  if (isLit) return (
-    <svg width={size} height={size} viewBox={v}>
-      <path {...p} strokeWidth="1.4" d="M8 13 L8 3 M11 3 L11 13"/>
-      <path {...p} strokeWidth="1.35" d="M7 3 L10 3 C12.5 3 12.5 7.5 10 7.5 L7 7.5"/>
-    </svg>
-  );
-
-  // Leaf for biology
-  if (isBio) return (
-    <svg width={size} height={size} viewBox={v}>
-      <path {...p} strokeWidth="1.35" d="M8 13.5 C8 13.5 3 9.5 3 5.5 C3 2.8 5.3 1.5 8 2.5 C10.7 1.5 13 2.8 13 5.5 C13 9.5 8 13.5 8 13.5 Z"/>
-      <line x1="8" y1="13.5" x2="8" y2="5" stroke={color} strokeWidth="1.1" strokeLinecap="round"/>
-    </svg>
-  );
-
-  // ∫ Integral for math
-  if (isMath) return (
-    <svg width={size} height={size} viewBox={v}>
-      <path {...p} strokeWidth="1.4" d="M9.5 2 C11.5 2 11 3.5 10 4.5 L6 11.5 C5 12.5 4.5 14 6.5 14"/>
-      <circle cx="9.5" cy="2.5" r="0.9" fill={color} stroke="none"/>
-      <circle cx="6.5" cy="13.5" r="0.9" fill={color} stroke="none"/>
-    </svg>
-  );
-
-  // Ionic column for history
-  if (isHist) return (
-    <svg width={size} height={size} viewBox={v}>
-      <rect x="4" y="2" width="8" height="1.5" rx="0.4" fill={color}/>
-      <path {...p} strokeWidth="1.1" d="M6 3.5 C6 3 5.5 3 5.5 3.5 L5.5 11.5 M10.5 3.5 C10.5 3 10 3 10 3.5 L10 11.5"/>
-      <line x1="6.5" y1="3.5" x2="6.5" y2="11.5" stroke={color} strokeWidth="1.1"/>
-      <line x1="9.5" y1="3.5" x2="9.5" y2="11.5" stroke={color} strokeWidth="1.1"/>
-      <rect x="4" y="11.5" width="8" height="2.5" rx="0.5" fill={color}/>
-    </svg>
-  );
-
-  // Flask for chemistry
-  if (isChem) return (
-    <svg width={size} height={size} viewBox={v}>
-      <path {...p} strokeWidth="1.35" d="M6.5 2 L6.5 7 L3 13 C2.5 14 3.5 14.5 4.5 14.5 L11.5 14.5 C12.5 14.5 13.5 14 13 13 L9.5 7 L9.5 2"/>
-      <line x1="5.5" y1="2" x2="10.5" y2="2" stroke={color} strokeWidth="1.35" strokeLinecap="round"/>
-      <circle cx="9.5" cy="11.5" r="1" fill={color} opacity="0.6"/>
-      <circle cx="6.5" cy="12.5" r="0.7" fill={color} opacity="0.4"/>
-    </svg>
-  );
-
-  // Brush for art
-  if (isArt) return (
-    <svg width={size} height={size} viewBox={v}>
-      <path {...p} strokeWidth="1.5" d="M12 2 L5.5 10.5"/>
-      <path d="M5.5 10.5 C4.5 11.5 3 12.5 3.5 13.5 C4 14.5 5.5 14 6.5 13 C7.5 12 7 10.5 5.5 10.5 Z" fill={color} stroke="none" opacity="0.8"/>
-      <line x1="11" y1="3" x2="13" y2="5" stroke={color} strokeWidth="0.9" strokeLinecap="round"/>
-    </svg>
-  );
-
-  // Quill for languages
-  if (isLang) return (
-    <svg width={size} height={size} viewBox={v}>
-      <path {...p} strokeWidth="1.1" d="M13 2 C11 4 7 8 5 14"/>
-      <path {...p} strokeWidth="1.35" d="M13 2 C10 5 8 9 7.5 10"/>
-      <path {...p} strokeWidth="1.35" d="M7.5 10 C6 10.5 5 12 5 14"/>
-      <path {...p} strokeWidth="0.9" d="M5 14 L7 12"/>
-    </svg>
-  );
-
-  // Sine wave for physics
-  if (isPhys) return (
-    <svg width={size} height={size} viewBox={v}>
-      <path {...p} strokeWidth="1.5" d="M2 8 C3.5 4 5 4 6.5 8 C8 12 9.5 12 11 8"/>
-      <path {...p} strokeWidth="1.5" strokeDasharray="1.5 2" d="M11 8 L14 8"/>
-    </svg>
-  );
-
-  // Curly braces for CS
-  if (isCS) return (
-    <svg width={size} height={size} viewBox={v}>
-      <path {...p} strokeWidth="1.3" d="M7 3 C5 3 5 5 5 6 C5 7 4 8 3 8 C4 8 5 9 5 10 C5 11 5 13 7 13"/>
-      <path {...p} strokeWidth="1.3" d="M9 3 C11 3 11 5 11 6 C11 7 12 8 13 8 C12 8 11 9 11 10 C11 11 11 13 9 13"/>
-    </svg>
-  );
-
-  // Default: serif italic initial
-  const letter = id ? id.replace(/[^a-zA-Z]/g, "")[0]?.toUpperCase() || "?" : "?";
-  return (
-    <svg width={size} height={size} viewBox={v}>
-      <text x="8" y="12.5" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontSize="12" fill={color}>{letter}</text>
-    </svg>
-  );
-}
-
 function useFbUser() {
   const [user, setUser] = React.useState(window.__fbCurrentUser || null);
   React.useEffect(() => {
@@ -143,7 +36,7 @@ function useFbUser() {
 function UserAvatar({ fbUser, letter, size = 28, onClick }) {
   const style = { width: size, height: size, borderRadius: "50%", flexShrink: 0, cursor: onClick ? "pointer" : "default" };
   if (fbUser && fbUser.photoURL) {
-    return <img src={fbUser.photoURL} alt="" style={{ ...style, border: "1.5px solid var(--hairline)", objectFit: "cover", filter: "grayscale(1) brightness(0.8)" }} onClick={onClick} />;
+    return <img src={fbUser.photoURL} alt="" style={{ ...style, border: "1.5px solid var(--hairline)", objectFit: "cover" }} onClick={onClick} />;
   }
   return <div className="sn-avatar" style={onClick ? { cursor: "pointer" } : undefined} onClick={onClick}>{letter}</div>;
 }
@@ -161,29 +54,56 @@ function Sidebar({ active = "dashboard", subjects = SUBJECTS, brandSub = "v1", o
   const hwOpen = [...HOMEWORK, ...store.homework].filter(h => !h.done).length;
   const quizCount = QUIZZES_UPCOMING.length;
 
+  // ─── Sliding pill indicator
+  const asideRef = React.useRef(null);
+  const [pill, setPill] = React.useState(null);
+  const [firstMeasure, setFirstMeasure] = React.useState(true);
+  React.useLayoutEffect(() => {
+    const root = asideRef.current;
+    if (!root) return;
+    const el = root.querySelector(".sn-nav-item.active");
+    if (!el) { setPill(null); return; }
+    setPill({
+      top: el.offsetTop,
+      left: el.offsetLeft,
+      width: el.offsetWidth,
+      height: el.offsetHeight,
+      bg: el.dataset.pillBg || "var(--accent)",
+    });
+    // Snap into place on first render without animating from 0,0
+    const t = setTimeout(() => setFirstMeasure(false), 60);
+    return () => clearTimeout(t);
+  }, [active, subjects.length]);
+
   return (
-    <aside className="sn-sidebar">
+    <aside className="sn-sidebar" ref={asideRef}>
+      {pill && (
+        <div
+          className={`sn-nav-pill ${firstMeasure ? "entering" : ""}`}
+          style={{
+            top: pill.top,
+            left: pill.left,
+            width: pill.width,
+            height: pill.height,
+            background: pill.bg,
+          }}
+        ></div>
+      )}
       <div className="sn-brand" style={{ cursor: onNav ? "pointer" : "default" }} onClick={onNav ? go("dashboard") : undefined}>
         <span className="mark">¶</span>
         <span className="name">Julian's Notebook</span>
         <span className="sub">{brandSub}</span>
       </div>
-      <svg className="sn-brand-flourish" viewBox="0 0 100 8" width="100" height="8" fill="none">
-        <circle cx="3" cy="4" r="1.3" fill="var(--accent)" fillOpacity="0.45"/>
-        <path d="M4.5 4 C16 1.5 24 6.5 32 4 C40 1.5 48 6.5 56 4 C64 1.5 72 6.5 80 4 C84 2.5 88 4 95 4" stroke="var(--accent)" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.4"/>
-        <circle cx="97" cy="4" r="1.3" fill="var(--accent)" fillOpacity="0.45"/>
-      </svg>
 
       <div className="sn-nav-group">
         <h4>Workspace</h4>
-        <div className={`sn-nav-item ${active === "dashboard" ? "active" : ""}`} onClick={go("dashboard")}><span className="ico">{Ico.home}</span>Today</div>
-        <div className={`sn-nav-item ${active === "homework" ? "active" : ""}`} onClick={go("homework")}><span className="ico">{Ico.hw}</span>Homework {hwOpen > 0 && <span className="badge">{hwOpen}</span>}</div>
-        <div className={`sn-nav-item ${active === "quizzes" ? "active" : ""}`} onClick={go("quizzes")}><span className="ico">{Ico.quiz}</span>Quizzes {quizCount > 0 && <span className="badge">{quizCount}</span>}</div>
-        <div className={`sn-nav-item ${active === "notes" ? "active" : ""}`} onClick={go("notes")}><span className="ico">{Ico.note}</span>Notes</div>
-        <div className={`sn-nav-item ${active === "cards" ? "active" : ""}`} onClick={go("flashcards")}><span className="ico">{Ico.cards}</span>Flashcards</div>
-        <div className={`sn-nav-item ${active === "schedule" ? "active" : ""}`} onClick={go("schedule")}><span className="ico">{Ico.cal}</span>Schedule</div>
-        <div className={`sn-nav-item ${active === "grades" ? "active" : ""}`} onClick={go("grades")}><span className="ico">{Ico.grade}</span>Grades</div>
-        <div className={`sn-nav-item ${active === "tools" ? "active" : ""}`} onClick={go("tools")}><span className="ico">{Ico.tools}</span>Tools</div>
+        <div className={`sn-nav-item ${active === "dashboard" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("dashboard")}><span className="ico">{Ico.home}</span>Today</div>
+        <div className={`sn-nav-item ${active === "homework" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("homework")}><span className="ico">{Ico.hw}</span>Homework {hwOpen > 0 && <span className="badge">{hwOpen}</span>}</div>
+        <div className={`sn-nav-item ${active === "quizzes" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("quizzes")}><span className="ico">{Ico.quiz}</span>Quizzes {quizCount > 0 && <span className="badge">{quizCount}</span>}</div>
+        <div className={`sn-nav-item ${active === "notes" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("notes")}><span className="ico">{Ico.note}</span>Notes</div>
+        <div className={`sn-nav-item ${active === "cards" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("flashcards")}><span className="ico">{Ico.cards}</span>Flashcards</div>
+        <div className={`sn-nav-item ${active === "schedule" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("schedule")}><span className="ico">{Ico.cal}</span>Schedule</div>
+        <div className={`sn-nav-item ${active === "grades" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("grades")}><span className="ico">{Ico.grade}</span>Grades</div>
       </div>
 
       <div className="sn-nav-group">
@@ -197,13 +117,17 @@ function Sidebar({ active = "dashboard", subjects = SUBJECTS, brandSub = "v1", o
         </h4>
         {subjects.map((s) => {
           const isActive = active === s.id;
+          const Glyph = window.SubjectGlyph;
           return (
             <div key={s.id}
               className={`sn-nav-item ${isActive ? "active" : ""}`}
+              data-pill-bg={s.color}
               onClick={go("subject:" + s.id)}
-              style={isActive ? { background: s.color, color: "white" } : undefined}
+              style={isActive ? { color: "white" } : undefined}
             >
-              <SubjectGlyph id={s.id} size={12} color={isActive ? "rgba(255,255,255,0.85)" : s.color} />
+              <span className="sn-glyph" style={{ "--c": s.color, color: isActive ? "rgba(255,255,255,0.9)" : s.color }}>
+                {Glyph ? <Glyph subject={s} size={15} color="currentColor" /> : <span className="sn-subject-dot" style={{ background: s.color }}></span>}
+              </span>
               <span title={s.name} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.short}</span>
               <span className="badge" style={isActive ? { color: "rgba(255,255,255,0.75)" } : undefined}>{s.hw || ""}</span>
             </div>
@@ -246,27 +170,28 @@ function Topbar({ streak = nbGetStreak(), placeholder = "Search notes, homework,
   );
 }
 
-function PageHeader({ eyebrow, title, italic, meta, actions, aside }) {
+function PageHeader({ eyebrow, title, italic, meta, actions }) {
   return (
-    <div className={`sn-pageheader${aside ? " has-aside" : ""}`}>
+    <div className="sn-pageheader">
       <div className="titleblock">
         {eyebrow && <div className="eyebrow">{eyebrow}</div>}
         <h1>
           {title}
           {italic && <> <em>{italic}</em></>}
         </h1>
-        <div className="sn-ornament" />
         {meta && <div className="meta">{meta}</div>}
       </div>
-      {aside && <div className="header-aside">{aside}</div>}
       {actions && <div className="actions">{actions}</div>}
     </div>
   );
 }
 
-function SubjectDot({ id, size = 8 }) {
+function SubjectDot({ id, size = 8, asGlyph = false }) {
   const s = subjectBy(id);
   if (!s) return null;
+  if (asGlyph && window.SubjectGlyph) {
+    return <window.SubjectGlyph subject={s} size={size * 1.6} color={s.color} />;
+  }
   return <span style={{ display: "inline-block", width: size, height: size, borderRadius: 2, background: s.color }}></span>;
 }
 
@@ -284,14 +209,4 @@ function ConfidenceMeter({ value }) {
   );
 }
 
-// ── Alloy theme — applied once on load ────────────────────────────────────────
-(function() {
-  const vars = { "--bg":"#18181a","--bg-2":"#212123","--surface":"#2b2b2d","--ink":"#e6e6ea","--ink-2":"#9898a4","--ink-3":"#585862","--hairline":"#2e2e34","--rule":"#3a3a3e","--accent":"#a4a8b4","--accent-ink":"#c4c8d4","--accent-soft":"#262630","--highlight":"#323238","--done":"#70c07a","--done-soft":"#183020","--danger":"#e07060","--info":"#6090ba","--plum":"#9070ba","--ochre":"#c0a038","--sidebar-bg":"#181818","--sidebar-border":"#2b2b2d" };
-  const el = document.createElement("style");
-  el.id = "nb-theme-override";
-  el.textContent = ":root{" + Object.entries(vars).map(([k, v]) => k + ":" + v).join(";") + "}";
-  document.head.appendChild(el);
-  window.dispatchEvent(new CustomEvent("nbThemeApplied", { detail: { accent: vars["--accent"] } }));
-})();
-
-Object.assign(window, { Ico, Sidebar, Topbar, PageHeader, SubjectDot, ConfidenceMeter, SubjectGlyph });
+Object.assign(window, { Ico, Sidebar, Topbar, PageHeader, SubjectDot, ConfidenceMeter });

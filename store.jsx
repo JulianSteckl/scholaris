@@ -398,30 +398,20 @@ function nbDeleteQuiz(id) {
 function nbGetStreak() {
   const KEY = "nb-streak-v1";
   const today = new Date().toDateString();
-  let data = { streak: 0, lastDate: "", best: 0 };
+  let data = { streak: 0, lastDate: "" };
   try {
-    data = { best: 0, ...JSON.parse(localStorage.getItem(KEY) || "null") } || data;
+    data = JSON.parse(localStorage.getItem(KEY) || "null") || data;
   } catch { /* ignore */ }
 
-  if (data.lastDate === today) return data.streak;
+  if (data.lastDate === today) return data.streak; // already counted today
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const newStreak = data.lastDate === yesterday.toDateString() ? data.streak + 1 : 1;
-  const newBest = Math.max(data.best || 0, newStreak);
   try {
-    localStorage.setItem(KEY, JSON.stringify({ streak: newStreak, lastDate: today, best: newBest }));
+    localStorage.setItem(KEY, JSON.stringify({ streak: newStreak, lastDate: today }));
   } catch { /* quota */ }
   return newStreak;
-}
-
-function nbGetStreakData() {
-  const KEY = "nb-streak-v1";
-  try {
-    const data = JSON.parse(localStorage.getItem(KEY) || "null");
-    const streak = nbGetStreak();
-    return { streak, best: Math.max(data?.best || 0, streak) };
-  } catch { return { streak: 0, best: 0 }; }
 }
 
 Object.assign(window, {
@@ -436,6 +426,6 @@ Object.assign(window, {
   nbGetUnits, nbAddUnit, nbDeleteUnit, nbSetNoteUnit,
   nbAddCustomDeck, nbGetCustomDecks, nbDeleteCustomDeck,
   nbAddQuiz, nbGetQuizzes, nbDeleteQuiz,
-  nbGetStreak, nbGetStreakData, nbSyncNow,
+  nbGetStreak, nbSyncNow,
   useNbStore, fmtFileSize, fileIconFor,
 });
