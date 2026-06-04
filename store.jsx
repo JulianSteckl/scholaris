@@ -398,191 +398,33 @@ function nbDeleteQuiz(id) {
 function nbGetStreak() {
   const KEY = "nb-streak-v1";
   const today = new Date().toDateString();
-  let data = { streak: 0, lastDate: "" };
+  let data = { streak: 0, lastDate: "", best: 0 };
   try {
-    data = JSON.parse(localStorage.getItem(KEY) || "null") || data;
+    data = { best: 0, ...JSON.parse(localStorage.getItem(KEY) || "null") } || data;
   } catch { /* ignore */ }
 
-  if (data.lastDate === today) return data.streak; // already counted today
+  if (data.lastDate === today) return data.streak;
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const newStreak = data.lastDate === yesterday.toDateString() ? data.streak + 1 : 1;
+  const newBest = Math.max(data.best || 0, newStreak);
   try {
-    localStorage.setItem(KEY, JSON.stringify({ streak: newStreak, lastDate: today }));
+    localStorage.setItem(KEY, JSON.stringify({ streak: newStreak, lastDate: today, best: newBest }));
   } catch { /* quota */ }
   return newStreak;
 }
 
-// ── XP / Level System ──
-const XP_LEVELS = [
-  { level: 1,  xp: 0,    title: "Freshman",    badge: "📚" },
-  { level: 2,  xp: 50,   title: "Sophomore",   badge: "✏️" },
-  { level: 3,  xp: 120,  title: "Planner",     badge: "📋" },
-  { level: 4,  xp: 220,  title: "On Track",    badge: "📈" },
-  { level: 5,  xp: 350,  title: "Scholar",     badge: "🎓" },
-  { level: 6,  xp: 520,  title: "Honor Roll",  badge: "⭐" },
-  { level: 7,  xp: 730,  title: "AP Veteran",  badge: "🏆" },
-  { level: 8,  xp: 1000, title: "Valedictorian",badge:"👑" },
-];
-
-function calcXPLevel(total) {
-  let cur = XP_LEVELS[0];
-  for (const l of XP_LEVELS) { if (total >= l.xp) cur = l; else break; }
-  const idx = XP_LEVELS.indexOf(cur);
-  const next = XP_LEVELS[idx + 1] || null;
-  const progress = next ? (total - cur.xp) / (next.xp - cur.xp) : 1;
-  return { ...cur, next, progress, total };
+function nbGetStreakData() {
+  const KEY = "nb-streak-v1";
+  try {
+    const data = JSON.parse(localStorage.getItem(KEY) || "null");
+    const streak = nbGetStreak();
+    return { streak, best: Math.max(data?.best || 0, streak) };
+  } catch { return { streak: 0, best: 0 }; }
 }
-
-function nbGetXP() {
-  if (!__nbStore.xp) __nbStore.xp = { total: 0 };
-  return calcXPLevel(__nbStore.xp.total || 0);
-}
-
-function nbAddXP(amount, reason) {
-  if (!__nbStore.xp) __nbStore.xp = { total: 0 };
-  const oldLevel = calcXPLevel(__nbStore.xp.total || 0).level;
-  __nbStore.xp.total = (__nbStore.xp.total || 0) + amount;
-  const newLevel = calcXPLevel(__nbStore.xp.total).level;
-  __nbNotify();
-  if (newLevel > oldLevel) {
-    const info = calcXPLevel(__nbStore.xp.total);
-    setTimeout(() => window.dispatchEvent(new CustomEvent("xpLevelUp", { detail: info })), 100);
-  }
-  // Toast for XP gain
-  setTimeout(() => window.dispatchEvent(new CustomEvent("toast", { detail: `+${amount} XP — ${reason}` })), 50);
-}
-
-// ── Canvas LMS Integration ──
-
-function nbGetCanvasConfig() {
-  try { return JSON.parse(localStorage.getItem("nb-canvas-v1") || "null"); } catch { return null; }
-}
-
-function nbSetCanvasConfig(config) {
-  if (!config) {
-    localStorage.removeItem("nb-canvas-v1");
-  } else {
-    localStorage.setItem("nb-canvas-v1", JSON.stringify(config));
-  }
-  window.dispatchEvent(new Event("canvasConfigChanged"));
-}
-
-function nbGetCanvasData() {
-  return __nbStore.canvasData || null;
-}
-
-function fmtCanvasDue(dueAt) {
-  if (!dueAt) return "No date";
-  const d = new Date(dueAt);
-  const now = new Date();
-  const diffDays = Math.floor((d - now) / 86400000);
-  if (diffDays < 0) return "Overdue";
-  if (diffDays === 0) return "Tonight";
-  if (diffDays === 1) return "Tomorrow";
-  if (diffDays < 7) return d.toLocaleDateString("en-US", { weekday: "short" });
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-async function nbSyncCanvas() {
-  const cfg = nbGetCanvasConfig();
-  if (!cfg || !cfg.domain || !cfg.token) throw new Error("no-config");
-
-  const base = `/api/canvas?domain=${encodeURIComponent(cfg.domain)}&token=${encodeURIComponent(cfg.token)}`;
-
-  // Fetch active courses
-  const coursesRes = await fetch(`${base}&path=${encodeURIComponent("/courses?enrollment_state=active&per_page=50")}`);
-  if (coursesRes.status === 401) throw new Error("canvas-auth");
-  if (!coursesRes.ok) throw new Error("canvas-error");
-  const courses = await coursesRes.json();
-  if (!Array.isArray(courses)) throw new Error("canvas-error");
-
-  // Fetch upcoming assignments for each course in parallel
-  const perCourse = await Promise.all(
-    courses.map(c =>
-      fetch(`${base}&path=${encodeURIComponent(`/courses/${c.id}/assignments?per_page=50&order_by=due_at&bucket=unsubmitted`)}`)
-        .then(r => r.json())
-        .then(list => (Array.isArray(list) ? list : []).map(a => ({
-          id:         "cvs-" + a.id,
-          title:      a.name,
-          subject:    c.name,
-          courseId:   c.id,
-          due:        fmtCanvasDue(a.due_at),
-          dueIso:     a.due_at || null,
-          urgent:     a.due_at ? (new Date(a.due_at) - new Date()) < 86400000 * 2 : false,
-          done:       false,
-          fromCanvas: true,
-          canvasUrl:  a.html_url || null,
-          points:     a.points_possible || null,
-        })))
-        .catch(() => [])
-    )
-  );
-
-  const assignments = perCourse
-    .flat()
-    .filter(a => !a.dueIso || new Date(a.dueIso) > new Date(Date.now() - 86400000))
-    .sort((a, b) => (a.dueIso || "z") < (b.dueIso || "z") ? -1 : 1);
-
-  __nbStore.canvasData = { courses, assignments, lastSync: Date.now() };
-  __nbNotify();
-  return { courses: courses.length, assignments: assignments.length };
-}
-
-function nbToggleCanvasAssignment(id) {
-  if (!__nbStore.canvasData) return;
-  __nbStore.canvasData.assignments = __nbStore.canvasData.assignments.map(a =>
-    a.id === id ? { ...a, done: !a.done } : a
-  );
-  if (__nbStore.canvasData.assignments.find(a => a.id === id)?.done) {
-    nbAddXP(15, "Completed Canvas assignment");
-    nbBumpWeekStat("hwDone");
-  }
-  __nbNotify();
-}
-
-// ── College Data ──
-function nbGetCollegeData() {
-  return __nbStore.college || { sat: null, act: null, schools: [], practiceTests: [] };
-}
-function nbSetCollegeData(patch) {
-  __nbStore.college = { ...nbGetCollegeData(), ...patch };
-  __nbNotify();
-}
-
-// ── Weekly Stats (for report card) ──
-function _weekKey() {
-  const d = new Date(); d.setDate(d.getDate() - d.getDay()); // Sunday
-  return `week-${d.toISOString().slice(0,10)}`;
-}
-function nbGetWeekStats() {
-  if (!__nbStore.weekStats) __nbStore.weekStats = {};
-  return __nbStore.weekStats[_weekKey()] || { hwDone: 0, notesWritten: 0, quizzesDone: 0, xpEarned: 0 };
-}
-function nbBumpWeekStat(key, by = 1) {
-  if (!__nbStore.weekStats) __nbStore.weekStats = {};
-  const k = _weekKey();
-  if (!__nbStore.weekStats[k]) __nbStore.weekStats[k] = { hwDone: 0, notesWritten: 0, quizzesDone: 0, xpEarned: 0 };
-  __nbStore.weekStats[k][key] = (__nbStore.weekStats[k][key] || 0) + by;
-  __nbNotify();
-}
-
-// Wrap nbToggleHomework to award XP and bump weekly stat
-const _nbToggleHomeworkBase = nbToggleHomework;
-nbToggleHomework = function(id) {
-  const before = [...HOMEWORK, ...(__nbStore.homework || [])].find(h => h.id === id);
-  _nbToggleHomeworkBase(id);
-  const after = [...HOMEWORK, ...(__nbStore.homework || [])].find(h => h.id === id);
-  if (after && after.done && !(before && before.done)) {
-    nbAddXP(15, "Completed homework");
-    nbBumpWeekStat("hwDone");
-  }
-};
 
 Object.assign(window, {
-  nbGetCanvasConfig, nbSetCanvasConfig, nbGetCanvasData, nbSyncCanvas,
-  nbToggleCanvasAssignment, fmtCanvasDue,
   nbSetFirebaseUser,
   nbAddNote, nbDeleteNote, nbAddHomework, nbDeleteHomework, nbGetNotes, nbGetHomework,
   nbAddAttachment, nbRemoveAttachment, nbGetAttachments,
@@ -594,9 +436,6 @@ Object.assign(window, {
   nbGetUnits, nbAddUnit, nbDeleteUnit, nbSetNoteUnit,
   nbAddCustomDeck, nbGetCustomDecks, nbDeleteCustomDeck,
   nbAddQuiz, nbGetQuizzes, nbDeleteQuiz,
-  nbGetStreak, nbSyncNow,
+  nbGetStreak, nbGetStreakData, nbSyncNow,
   useNbStore, fmtFileSize, fileIconFor,
-  nbGetXP, nbAddXP, calcXPLevel, XP_LEVELS,
-  nbGetCollegeData, nbSetCollegeData,
-  nbGetWeekStats, nbBumpWeekStat,
 });

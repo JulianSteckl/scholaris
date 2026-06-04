@@ -3,33 +3,28 @@
 
 // ─────────────── Modal primitive
 
-function Modal({ onClose, children, width = 640, top = "12vh", variant = "default" }) {
+function Modal({ onClose, children, width = 640, top = "12vh" }) {
   React.useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
-  const isBottom = variant === "spring-bottom";
-  const isCmdk = variant === "cmdk";
   return (
-    <div onClick={onClose} className={`sn-modal-backdrop ${isCmdk ? "heavy-blur" : ""}`} style={{
+    <div onClick={onClose} style={{
       position: "fixed", inset: 0, zIndex: 100,
-      background: isCmdk ? undefined : "rgba(20, 16, 11, 0.42)",
-      backdropFilter: isCmdk ? undefined : "blur(2px)",
-      display: "flex", justifyContent: "center",
-      alignItems: isBottom ? "flex-end" : "flex-start",
-      paddingTop: isBottom ? 0 : top,
-      paddingBottom: isBottom ? "8vh" : 0,
+      background: "rgba(20, 16, 11, 0.42)",
+      backdropFilter: "blur(2px)",
+      display: "flex", justifyContent: "center", alignItems: "flex-start",
+      paddingTop: top,
+      animation: "fade-up 0.18s ease",
     }}>
-      <div onClick={(e) => e.stopPropagation()}
-        className={`sn-root ${isBottom ? "sn-modal-spring-bottom" : isCmdk ? "sn-modal-drop-top" : ""}`}
-        style={{
-          width, maxWidth: "92vw", maxHeight: "78vh",
-          background: "var(--surface)", border: "1px solid var(--hairline)",
-          borderRadius: 8, overflow: "hidden",
-          boxShadow: "0 24px 60px -12px rgba(20,16,11,0.25), 0 4px 16px rgba(20,16,11,0.08)",
-          display: "flex", flexDirection: "column",
-        }}>
+      <div onClick={(e) => e.stopPropagation()} className="sn-root" style={{
+        width, maxWidth: "92vw", maxHeight: "78vh",
+        background: "var(--surface)", border: "1px solid var(--hairline)",
+        borderRadius: 8, overflow: "hidden",
+        boxShadow: "0 24px 60px -12px rgba(20,16,11,0.25), 0 4px 16px rgba(20,16,11,0.08)",
+        display: "flex", flexDirection: "column",
+      }}>
         {children}
       </div>
     </div>
@@ -147,7 +142,7 @@ function CommandPalette({ onClose, onNav, onOpenQuickAdd }) {
   };
 
   return (
-    <Modal onClose={onClose} width={620} top="10vh" variant="cmdk">
+    <Modal onClose={onClose} width={620} top="10vh">
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 20px", borderBottom: "1px solid var(--hairline)" }}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--ink-3)" strokeWidth="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
         <input
@@ -263,7 +258,7 @@ function QuickAdd({ onClose, initialType = "homework" }) {
   };
 
   return (
-    <Modal onClose={onClose} width={520} variant="spring-bottom">
+    <Modal onClose={onClose} width={520}>
       <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--hairline)" }}>
         <div className="mono" style={{ fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em" }}>Quick add</div>
         <div className="serif" style={{ fontFamily: "var(--f-display)", fontSize: 28, lineHeight: 1.1, marginTop: 4 }}>
@@ -571,8 +566,7 @@ function PomodoroChip() {
       cursor: "pointer", position: "relative", overflow: "hidden",
     }}>
       <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${pct * 100}%`, background: "rgba(0,0,0,0.05)" }}></div>
-      <span className="pomo-pulse"></span>
-      <span style={{ position: "relative" }}>{String(m).padStart(2,"0")}:{String(s).padStart(2,"0")}</span>
+      <span style={{ position: "relative" }}>⏱ {String(m).padStart(2,"0")}:{String(s).padStart(2,"0")}</span>
     </div>
   );
 }
