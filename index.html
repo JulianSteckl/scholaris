@@ -468,8 +468,7 @@ function RouteView({ route, go, tweaks, setTweak }) {
     case "quiz":
       return <TakeQuiz type={route.quizType} deckId={route.deckId} onExit={() => go("quizzes")} />;
     case "quiz-detail":
-      retu
-rn <QuizDetailPage quizId={route.id} />;
+      return <QuizDetailPage quizId={route.id} />;
     case "notes":
       return <NotesIndexContent
         onOpenSubject={(id) => go("subject:" + id)}
