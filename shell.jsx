@@ -202,7 +202,7 @@ function Topbar({ streak = nbGetStreak(), placeholder = "Search notes, homework,
         <span><b style={{ color: "var(--ink)" }}>{streak}</b>-day streak</span>
       </div>
       <button className="sn-btn icon ghost" title="Quick add" onClick={onPlusClick}>{Ico.plus}</button>
-      <UserAvatar fbUser={fbUser} letter={avatarLetter} onClick={fbUser ? onSignOut : undefined} />
+      <UserAvatar fbUser={fbUser} letter={avatarLetter} onClick={onSignOut} />
     </div>
   );
 }
