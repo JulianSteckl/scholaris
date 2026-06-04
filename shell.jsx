@@ -10,6 +10,7 @@ const Ico = {
   cards:   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="9" height="10" rx="1"/><path d="M5 2h9v10"/></svg>,
   grade:   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 2l1.8 4 4.2.5-3 2.9.8 4.1L8 11.7 4.2 13.5 5 9.4 2 6.5 6.2 6 8 2z"/></svg>,
   file:    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h6l4 4v8H3V2zM9 2v4h4"/></svg>,
+  college: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 2l6 3-6 3-6-3 6-3z"/><path d="M2 8v3c0 1.1 2.7 2 6 2s6-.9 6-2V8"/><path d="M14 5v5"/></svg>,
   search:  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>,
   plus:    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 3v10M3 8h10"/></svg>,
   flame:   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5c.7 1.7-.4 3-1 4-.7 1.2.3 2 .8 1.4.4-.5.5-1.2.8-1.7.5 1 2 2.5 2 4.4 0 2.4-2 4.4-2.6 4.4-.7 0-.8-1-1.7-1.5-1.2-.7-1.5-2.2-.4-3-.5 2 1 2.5 1.5 1.5.7-1.3-1-2-1.4-3.6-.3-1.4 1-3 2-5.9z"/></svg>,
@@ -104,6 +105,7 @@ function Sidebar({ active = "dashboard", subjects = SUBJECTS, brandSub = "v1", o
         <div className={`sn-nav-item ${active === "cards" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("flashcards")}><span className="ico">{Ico.cards}</span>Flashcards</div>
         <div className={`sn-nav-item ${active === "schedule" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("schedule")}><span className="ico">{Ico.cal}</span>Schedule</div>
         <div className={`sn-nav-item ${active === "grades" ? "active" : ""}`} data-pill-bg="var(--accent)" onClick={go("grades")}><span className="ico">{Ico.grade}</span>Grades</div>
+        <div className={`sn-nav-item ${active === "college" ? "active" : ""}`} data-pill-bg="var(--plum)" onClick={go("college")} style={active === "college" ? { color: "white" } : {}}><span className="ico">{Ico.college}</span>College Prep</div>
       </div>
 
       <div className="sn-nav-group">
@@ -136,7 +138,8 @@ function Sidebar({ active = "dashboard", subjects = SUBJECTS, brandSub = "v1", o
       </div>
 
       <div style={{ marginTop: "auto", paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <XPBar />
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
           <UserAvatar fbUser={fbUser} letter={avatarLetter} />
           <div style={{ lineHeight: 1.2, minWidth: 0 }}>
             <div style={{ fontSize: 12.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
@@ -145,6 +148,40 @@ function Sidebar({ active = "dashboard", subjects = SUBJECTS, brandSub = "v1", o
         </div>
       </div>
     </aside>
+  );
+}
+
+// ── XP Bar component ──────────────────────────────────────────────────────
+function XPBar() {
+  const [xp, setXp] = React.useState(() => typeof nbGetXP === "function" ? nbGetXP() : null);
+  React.useEffect(() => {
+    const refresh = () => setXp(nbGetXP());
+    window.addEventListener("nbStoreChange", refresh);
+    return () => window.removeEventListener("nbStoreChange", refresh);
+  }, []);
+  if (!xp) return null;
+  return (
+    <div style={{ padding: "8px 0 4px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <span style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          {xp.badge} Lv.{xp.level} {xp.title}
+        </span>
+        <span style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)" }}>{xp.total} XP</span>
+      </div>
+      <div style={{ height: 4, borderRadius: 2, background: "var(--hairline)", overflow: "hidden" }}>
+        <div style={{
+          height: "100%", borderRadius: 2,
+          background: "var(--accent)",
+          width: `${Math.round(xp.progress * 100)}%`,
+          transition: "width 0.6s cubic-bezier(0.22,1,0.36,1)",
+        }}></div>
+      </div>
+      {xp.next && (
+        <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 3 }}>
+          {xp.next.xp - xp.total} XP to {xp.next.title}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -165,7 +202,7 @@ function Topbar({ streak = nbGetStreak(), placeholder = "Search notes, homework,
         <span><b style={{ color: "var(--ink)" }}>{streak}</b>-day streak</span>
       </div>
       <button className="sn-btn icon ghost" title="Quick add" onClick={onPlusClick}>{Ico.plus}</button>
-      <UserAvatar fbUser={fbUser} letter={avatarLetter} onClick={onSignOut} />
+      <UserAvatar fbUser={fbUser} letter={avatarLetter} onClick={fbUser ? onSignOut : undefined} />
     </div>
   );
 }

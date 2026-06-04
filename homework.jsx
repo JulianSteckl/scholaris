@@ -95,7 +95,7 @@ function HomeworkPage({ density = "default" }) {
 }
 
 // Content-only version for in-app routing
-function HomeworkContent() {
+function HomeworkContent({ onOpenCanvas }) {
   const [filter, setFilter] = React.useState("open");
   const [subjectFilter, setSubjectFilter] = React.useState(null);
   const [showSubjectFilter, setShowSubjectFilter] = React.useState(false);
@@ -208,6 +208,11 @@ function HomeworkContent() {
 
       <div style={{ marginTop: 20, fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
         ↳ Click a row to open · drag to reorder · checkbox to complete
+      </div>
+
+      <div style={{ marginTop: 28 }}>
+        <CanvasSyncBar onOpenSetup={onOpenCanvas || (() => window.dispatchEvent(new Event("openCanvasSetup")))} />
+        <CanvasHomeworkSection onOpenSetup={onOpenCanvas || (() => window.dispatchEvent(new Event("openCanvasSetup")))} />
       </div>
     </>
   );

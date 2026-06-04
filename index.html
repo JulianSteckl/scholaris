@@ -49,8 +49,8 @@
 <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js"; }</script>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
 <script type="text/babel" src="onboarding.jsx?v=3"></script>
@@ -68,6 +68,9 @@
 <script type="text/babel" src="mobile.jsx?v=3"></script>
 <script type="text/babel" src="interactions.jsx?v=4"></script>
 <script src="animations.jsx?v=1"></script>
+<script type="text/babel" src="college.jsx?v=1"></script>
+<script type="text/babel" src="music-player.jsx?v=1"></script>
+<script type="text/babel" src="canvas-sync.jsx?v=1"></script>
 
 <script type="text/babel" data-presets="env,react">
 /* global DashCombined, DashFocus, DashTimeline, HomeworkContent, HomeworkDetailPage,
@@ -112,11 +115,15 @@ function App() {
     window.location.reload();
   };
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
-  const [quickAdd, setQuickAdd] = React.useState(null); // null | "homework" | "note" | ...
+  const [quickAdd, setQuickAdd] = React.useState(null);
   const [aiOpen, setAiOpen] = React.useState(false);
   const [scheduleEditorOpen, setScheduleEditorOpen] = React.useState(false);
   const [manageSubjectsOpen, setManageSubjectsOpen] = React.useState(false);
   const [apiKeyOpen, setApiKeyOpen] = React.useState(false);
+  const [canvasOpen, setCanvasOpen] = React.useState(false);
+  const [weeklyReportOpen, setWeeklyReportOpen] = React.useState(false);
+  const [whatToDoOpen, setWhatToDoOpen] = React.useState(false);
+  const [levelUpInfo, setLevelUpInfo] = React.useState(null);
   const [hasApiKey, setHasApiKey] = React.useState(() => !!nbGetApiKey());
   const [fbUser, setFbUser] = React.useState(null);
   const [authReady, setAuthReady] = React.useState(!window.__fbAuth);
@@ -199,6 +206,9 @@ function App() {
     window.addEventListener("openManageSubjects", onManageSubjects);
     window.addEventListener("openApiKeyModal", onOpenApiKey);
     window.addEventListener("apiKeyChanged", onApiKeyChanged);
+    // XP level-up listener
+    const onLevelUp = (e) => setLevelUpInfo(e.detail);
+    window.addEventListener("xpLevelUp", onLevelUp);
     return () => {
       window.removeEventListener("openQuickAdd", onQuickAdd);
       window.removeEventListener("printWeek", onPrint);
@@ -207,7 +217,19 @@ function App() {
       window.removeEventListener("openManageSubjects", onManageSubjects);
       window.removeEventListener("openApiKeyModal", onOpenApiKey);
       window.removeEventListener("apiKeyChanged", onApiKeyChanged);
+      window.removeEventListener("xpLevelUp", onLevelUp);
     };
+  }, []);
+
+  // Weekly Report Card — show on Mondays (or first open after Sunday)
+  React.useEffect(() => {
+    const lastShown = localStorage.getItem("nb-weekly-report-shown");
+    const today = new Date();
+    const weekKey = (() => { const d = new Date(today); d.setDate(d.getDate() - d.getDay()); return d.toISOString().slice(0,10); })();
+    if (lastShown !== weekKey && today.getDay() === 1) { // Monday
+      setTimeout(() => setWeeklyReportOpen(true), 2000);
+      localStorage.setItem("nb-weekly-report-shown", weekKey);
+    }
   }, []);
 
   const go = (key) => {
@@ -231,6 +253,7 @@ function App() {
   else if (route.view === "flashcards") sidebarActive = "cards";
   else if (route.view === "schedule") sidebarActive = "schedule";
   else if (route.view === "grades") sidebarActive = "grades";
+  else if (route.view === "college") sidebarActive = "college";
   else if (route.view === "subjects") sidebarActive = "";
 
   // Decide if content area needs special styling (note editor takes over the area)
@@ -299,7 +322,16 @@ function App() {
               onSignOut={handleSignOut}
               extras={
                 <>
+                  <button
+                    className="sn-btn"
+                    onClick={() => setWhatToDoOpen(true)}
+                    title="What should I work on right now?"
+                    style={{ fontSize: 12, padding: "5px 11px", borderColor: "var(--hairline)", color: "var(--ink-2)", display: "flex", alignItems: "center", gap: 5 }}
+                  >
+                    <span style={{ fontSize: 13 }}>🎯</span> What to do?
+                  </button>
                   <PomodoroChip />
+                  <CanvasTopbarButton onOpen={() => setCanvasOpen(true)} />
                   <button
                     className="sn-btn ghost"
                     onClick={() => setApiKeyOpen(true)}
@@ -344,10 +376,10 @@ function App() {
               undefined
             }>
               {(isNote || isQuiz || route.view === "homework-detail") ? (
-                <RouteView route={route} go={go} tweaks={tweaks} setTweak={setTweak} />
+                <RouteView route={route} go={go} tweaks={tweaks} setTweak={setTweak} onOpenCanvas={() => setCanvasOpen(true)} />
               ) : (
                 <div className="route-transition" key={route.view + ":" + (route.id || "") + ":" + (route.sub || "")}>
-                  <RouteView route={route} go={go} tweaks={tweaks} setTweak={setTweak} />
+                  <RouteView route={route} go={go} tweaks={tweaks} setTweak={setTweak} onOpenCanvas={() => setCanvasOpen(true)} />
                 </div>
               )}
             </div>
@@ -385,7 +417,20 @@ function App() {
       {apiKeyOpen && (
         <ApiKeyModal onClose={() => setApiKeyOpen(false)} />
       )}
+      {canvasOpen && (
+        <CanvasSetupModal onClose={() => setCanvasOpen(false)} />
+      )}
+      {weeklyReportOpen && (
+        <WeeklyReportModal onClose={() => setWeeklyReportOpen(false)} />
+      )}
+      {whatToDoOpen && (
+        <WhatToDoModal onClose={() => setWhatToDoOpen(false)} onNav={go} />
+      )}
+      {levelUpInfo && (
+        <LevelUpModal info={levelUpInfo} onClose={() => setLevelUpInfo(null)} />
+      )}
 
+      <MusicPlayer />
       <ToastHost />
 
       <TweaksPanel title="Tweaks">
@@ -450,7 +495,7 @@ function App() {
   );
 }
 
-function RouteView({ route, go, tweaks, setTweak }) {
+function RouteView({ route, go, tweaks, setTweak, onOpenCanvas }) {
   switch (route.view) {
     case "dashboard":
     case "":
@@ -458,7 +503,7 @@ function RouteView({ route, go, tweaks, setTweak }) {
       if (tweaks.homeVariant === "timeline") return <DashTimeline view={tweaks.subjectView} />;
       return <DashCombined view={tweaks.subjectView} />;
     case "homework":
-      return <HomeworkContent />;
+      return <HomeworkContent onOpenCanvas={onOpenCanvas} />;
     case "homework-detail":
       return <HomeworkDetailPage hwId={route.id} />;
     case "quizzes":
@@ -490,6 +535,8 @@ function RouteView({ route, go, tweaks, setTweak }) {
       return <ScheduleContent />;
     case "grades":
       return <GradesContent />;
+    case "college":
+      return <CollegeContent />;
     case "flashcards":
       return <FlashcardsContent onTakeQuiz={(t, deckId) => go("quiz/" + t + (deckId ? "/" + deckId : ""))} />;
     default:
@@ -503,6 +550,148 @@ function NotFound({ go }) {
       <div style={{ fontFamily: "var(--f-display)", fontSize: 64, color: "var(--ink-3)" }}>404</div>
       <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 22, color: "var(--ink-2)", marginTop: 8 }}>That page isn't in this notebook.</div>
       <button className="sn-btn primary" style={{ marginTop: 24 }} onClick={() => go("dashboard")}>← Back to today</button>
+    </div>
+  );
+}
+
+// ── Weekly Report Card Modal ─────────────────────────────────────────────────
+function WeeklyReportModal({ onClose }) {
+  const stats = typeof nbGetWeekStats === "function" ? nbGetWeekStats() : {};
+  const streak = typeof nbGetStreak === "function" ? nbGetStreak() : 0;
+  const xp = typeof nbGetXP === "function" ? nbGetXP() : null;
+  const allHw = [...(typeof HOMEWORK !== "undefined" ? HOMEWORK : []), ...(typeof nbGetHomework === "function" ? nbGetHomework() : [])];
+  const doneCount = allHw.filter(h => h.done).length;
+
+  const items = [
+    { emoji: "✅", label: "Homework completed", value: stats.hwDone || doneCount || 0 },
+    { emoji: "📝", label: "Notes written", value: stats.notesWritten || 0 },
+    { emoji: "🧠", label: "Quizzes studied", value: stats.quizzesDone || 0 },
+    { emoji: "🔥", label: "Day streak", value: streak },
+    xp ? { emoji: "⭐", label: "Total XP earned", value: xp.total + " XP" } : null,
+  ].filter(Boolean);
+
+  const msgs = ["You're building great habits.", "Keep the momentum going.", "Consistency beats intensity.", "Another week in the books.", "Every task done is a step closer."];
+  const msg = msgs[new Date().getDay() % msgs.length];
+
+  return (
+    <div className="sn-modal-backdrop heavy-blur" style={{ position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"center",justifyContent:"center" }} onClick={onClose}>
+      <div className="sn-modal-spring-bottom sn-card" style={{ width:420,maxWidth:"90vw",padding:32,borderRadius:12 }} onClick={e=>e.stopPropagation()}>
+        <div style={{ fontFamily:"var(--f-mono)",fontSize:10,color:"var(--ink-3)",textTransform:"uppercase",letterSpacing:"0.14em",marginBottom:8 }}>
+          Weekly Report — {new Date().toLocaleDateString("en-US",{month:"long",day:"numeric"})}
+        </div>
+        <div style={{ fontFamily:"var(--f-display)",fontSize:30,lineHeight:1.1,marginBottom:4 }}>
+          How was <em>your week?</em>
+        </div>
+        <div style={{ fontFamily:"var(--f-display)",fontStyle:"italic",color:"var(--ink-2)",fontSize:15,marginBottom:24 }}>{msg}</div>
+        <div style={{ display:"flex",flexDirection:"column",gap:10,marginBottom:24 }}>
+          {items.map((it,i) => (
+            <div key={i} style={{ display:"flex",alignItems:"center",gap:14,padding:"10px 14px",background:"var(--bg-2)",borderRadius:7,border:"1px solid var(--hairline)" }}>
+              <span style={{ fontSize:20 }}>{it.emoji}</span>
+              <span style={{ flex:1,fontFamily:"var(--f-ui)",fontSize:13.5,color:"var(--ink-2)" }}>{it.label}</span>
+              <span style={{ fontFamily:"var(--f-display)",fontSize:22,color:"var(--ink)" }}>{it.value}</span>
+            </div>
+          ))}
+        </div>
+        <button className="sn-btn primary" style={{ width:"100%",justifyContent:"center",fontSize:13 }} onClick={onClose}>
+          Start the new week →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── What To Do Modal ─────────────────────────────────────────────────────────
+function WhatToDoModal({ onClose, onNav }) {
+  const [rec, setRec] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const allHw = [...(typeof HOMEWORK !== "undefined" ? HOMEWORK : []), ...(typeof nbGetHomework === "function" ? nbGetHomework() : [])].filter(h => !h.done);
+    const quizzes = typeof QUIZZES_UPCOMING !== "undefined" ? QUIZZES_UPCOMING : [];
+    const hour = new Date().getHours();
+    const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+
+    // Rule-based recommendation
+    const urgent = allHw.filter(h => h.urgent);
+    const soonQuiz = quizzes.sort((a,b) => (a.confidence||1)-(b.confidence||1))[0];
+
+    let pick = null;
+    if (urgent.length > 0) {
+      pick = { type:"homework", item: urgent[0], reason: "It's due soon and can't wait." };
+    } else if (soonQuiz && (soonQuiz.confidence||1) < 0.6) {
+      pick = { type:"quiz", item: soonQuiz, reason: `You're only ${Math.round((soonQuiz.confidence||0.5)*100)}% confident — perfect time to study.` };
+    } else if (allHw.length > 0) {
+      const byEst = allHw.sort((a,b) => {
+        const mins = s => { if(!s||s==="—") return 60; const m=s.match(/(\d+)h/); const n=s.match(/(\d+)m/); return (m?parseInt(m[1])*60:0)+(n?parseInt(n[1]):0)||30; };
+        return mins(a.est) - mins(b.est);
+      });
+      pick = { type:"homework", item: byEst[0], reason: timeOfDay === "morning" ? "Start your day with a quick win." : timeOfDay === "afternoon" ? "Good time to knock out homework." : "Clear this before tomorrow." };
+    } else {
+      pick = { type:"free", reason:"You're all caught up! Maybe review notes or do some flashcard practice." };
+    }
+
+    setTimeout(() => { setRec(pick); setLoading(false); }, 600);
+  }, []);
+
+  const subj = rec && rec.item && rec.item.subject ? (typeof subjectBy === "function" ? subjectBy(rec.item.subject) : null) : null;
+
+  return (
+    <div className="sn-modal-backdrop heavy-blur" style={{ position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"center",justifyContent:"center" }} onClick={onClose}>
+      <div className="sn-modal-spring-bottom sn-card" style={{ width:400,maxWidth:"90vw",padding:28,borderRadius:12 }} onClick={e=>e.stopPropagation()}>
+        <div style={{ fontFamily:"var(--f-mono)",fontSize:10,color:"var(--ink-3)",textTransform:"uppercase",letterSpacing:"0.14em",marginBottom:12 }}>
+          🎯 Right Now
+        </div>
+        {loading ? (
+          <div style={{ textAlign:"center",padding:"24px 0",fontFamily:"var(--f-display)",fontStyle:"italic",color:"var(--ink-3)",fontSize:16 }}>
+            Thinking…
+          </div>
+        ) : rec && rec.type === "free" ? (
+          <>
+            <div style={{ fontFamily:"var(--f-display)",fontSize:26,lineHeight:1.2,marginBottom:10 }}>You're <em>all caught up!</em> 🎉</div>
+            <div style={{ fontFamily:"var(--f-ui)",color:"var(--ink-2)",fontSize:14,lineHeight:1.6,marginBottom:20 }}>{rec.reason}</div>
+            <div style={{ display:"flex",gap:8 }}>
+              <button className="sn-btn" onClick={() => { onNav("flashcards"); onClose(); }} style={{ flex:1,justifyContent:"center",fontSize:12 }}>Study flashcards</button>
+              <button className="sn-btn ghost" onClick={onClose} style={{ fontSize:12 }}>Close</button>
+            </div>
+          </>
+        ) : rec ? (
+          <>
+            <div style={{ fontFamily:"var(--f-display)",fontSize:24,lineHeight:1.2,marginBottom:6 }}>
+              Work on <em>{rec.item.title || rec.item.title}</em>
+            </div>
+            {subj && <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:10 }}><span style={{ width:8,height:8,borderRadius:2,background:subj.color,flexShrink:0 }}></span><span style={{ fontFamily:"var(--f-mono)",fontSize:11,color:"var(--ink-3)" }}>{subj.short}</span>{rec.item.est && rec.item.est!=="—" && <span style={{ fontFamily:"var(--f-mono)",fontSize:11,color:"var(--ink-3)" }}>· est. {rec.item.est}</span>}</div>}
+            <div style={{ fontFamily:"var(--f-display)",fontStyle:"italic",color:"var(--ink-2)",fontSize:15,lineHeight:1.5,borderLeft:"2px solid var(--accent)",paddingLeft:12,marginBottom:20 }}>{rec.reason}</div>
+            <div style={{ display:"flex",gap:8 }}>
+              <button className="sn-btn primary" onClick={() => { onNav(rec.type==="quiz"?"quizzes":"homework"); onClose(); }} style={{ flex:1,justifyContent:"center",fontSize:12 }}>
+                {rec.type==="quiz" ? "Go study →" : "Open homework →"}
+              </button>
+              <button className="sn-btn ghost" onClick={onClose} style={{ fontSize:12 }}>Later</button>
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ── Level Up Modal ───────────────────────────────────────────────────────────
+function LevelUpModal({ info, onClose }) {
+  React.useEffect(() => { const t = setTimeout(onClose, 5000); return () => clearTimeout(t); }, []);
+  return (
+    <div style={{ position:"fixed",bottom:90,left:"50%",transform:"translateX(-50%)",zIndex:600,pointerEvents:"none" }}>
+      <div className="sn-modal-spring-bottom" style={{
+        background:"var(--ink)",color:"var(--bg)",borderRadius:12,padding:"18px 28px",
+        display:"flex",alignItems:"center",gap:16,minWidth:300,
+        boxShadow:"0 8px 32px rgba(20,16,11,0.28)",
+        pointerEvents:"auto", cursor:"pointer",
+      }} onClick={onClose}>
+        <span style={{ fontSize:32 }}>{info.badge}</span>
+        <div>
+          <div style={{ fontFamily:"var(--f-mono)",fontSize:10,textTransform:"uppercase",letterSpacing:"0.14em",opacity:0.6,marginBottom:3 }}>Level up!</div>
+          <div style={{ fontFamily:"var(--f-display)",fontSize:20 }}>Level {info.level} — <em>{info.title}</em></div>
+          <div style={{ fontFamily:"var(--f-mono)",fontSize:11,opacity:0.65,marginTop:2 }}>{info.total} XP total</div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -64,12 +64,14 @@ body, html { margin: 0; padding: 0; }
 }
 
 .sn-sidebar {
-  border-right: 1px solid #d4c8b4;
+  border-right: 1px solid rgba(180, 160, 120, 0.35);
   padding: 22px 18px 22px;
   display: flex;
   flex-direction: column;
   gap: 22px;
-  background: #e8e0d0;
+  background: rgba(232, 224, 208, 0.72);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
   overflow: hidden;
 }
 
@@ -160,8 +162,13 @@ body, html { margin: 0; padding: 0; }
   align-items: center;
   gap: 14px;
   padding: 16px 32px;
-  border-bottom: 1px solid var(--hairline);
-  background: var(--bg);
+  border-bottom: 1px solid rgba(215, 200, 170, 0.5);
+  background: rgba(250, 247, 241, 0.82);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .sn-search {
   flex: 1;
@@ -175,8 +182,12 @@ body, html { margin: 0; padding: 0; }
   padding: 7px 12px;
   font-size: 13px;
   color: var(--ink-2);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.sn-search:focus-within { border-color: var(--ink); }
+.sn-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 .sn-search input {
   flex: 1; border: 0; outline: 0; background: transparent;
   font-family: inherit; font-size: 13.5px; color: var(--ink);
@@ -212,7 +223,7 @@ body, html { margin: 0; padding: 0; }
 }
 .sn-pageheader h1 {
   font-family: var(--f-display); font-weight: 400;
-  font-size: 38px; line-height: 1.05; margin: 0;
+  font-size: clamp(24px, 2vw + 16px, 38px); line-height: 1.05; margin: 0;
   letter-spacing: -0.015em;
 }
 .sn-pageheader h1 em { font-style: italic; color: var(--accent); }
@@ -429,8 +440,19 @@ body, html { margin: 0; padding: 0; }
 .chip.done { color: var(--done); border-color: var(--done-soft); background: var(--done-soft); }
 
 /* Scrollbars */
-.sn-content::-webkit-scrollbar { width: 8px; }
-.sn-content::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 4px; }
+.sn-content::-webkit-scrollbar { width: 6px; }
+.sn-content::-webkit-scrollbar-track { background: transparent; }
+.sn-content::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 99px; }
+.sn-content::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+/* Text selection — ochre highlight, ink text */
+::selection {
+  background: var(--highlight);
+  color: var(--accent-ink);
+}
+
+/* Placeholder text — use ink-3 so it reads as a hint, not real content */
+::placeholder { color: var(--ink-3); opacity: 1; }
 
 /* Density variants */
 .density-roomy { --density: 1.25; }
@@ -691,4 +713,22 @@ body, html { margin: 0; padding: 0; }
 @keyframes flip {
   0% { transform: rotateY(0deg); }
   100% { transform: rotateY(180deg); }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Focus states — keyboard navigation visibility
+   ───────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+.sn-btn:focus-visible,
+.sn-nav-item:focus-visible,
+.hw-check:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
