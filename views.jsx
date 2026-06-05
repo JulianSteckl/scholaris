@@ -515,7 +515,7 @@ Create a realistic day-by-day study plan for the rest of this week. For each day
   React.useEffect(() => { if (open && !plan && !loading) generate(); }, [open]);
 
   return (
-    <div className="sn-card" style={{ marginBottom: 20, borderLeft: "3px solid var(--accent)" }}>
+    <div className="sn-card" style={{ marginBottom: 16, borderLeft: "3px solid var(--accent)", padding: "10px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <div className="sn-card-title" style={{ marginBottom: 2 }}>
@@ -536,7 +536,7 @@ Create a realistic day-by-day study plan for the rest of this week. For each day
       </div>
 
       {open && (
-        <div style={{ marginTop: 16, borderTop: "1px solid var(--hairline)", paddingTop: 14 }}>
+        <div style={{ marginTop: 10, borderTop: "1px solid var(--hairline)", paddingTop: 10 }}>
           {loading && (
             <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--ink-3)", fontFamily: "var(--f-display)", fontStyle: "italic" }}>
               <div className="ai-dots"><span></span><span></span><span></span></div>
@@ -546,8 +546,8 @@ Create a realistic day-by-day study plan for the rest of this week. For each day
           )}
           {error && error !== "__no-key__" && <div style={{ color: "var(--accent)", fontSize: 13 }}>{error}</div>}
           {error === "__no-key__" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 13, marginBottom: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 12, marginBottom: 2 }}>
                 Log homework and quiz dates to generate your personalized plan.
               </div>
               {[
@@ -556,10 +556,10 @@ Create a realistic day-by-day study plan for the rest of this week. For each day
                 { day: "Wednesday", task: "Bio: draft enzyme kinetics lab report · 1h 30m" },
               ].map(({ day, task }) => (
                 <div key={day} style={{ opacity: 0.42 }}>
-                  <div style={{ fontFamily: "var(--f-display)", fontSize: 14, fontWeight: 600, marginBottom: 3, color: "var(--ink-2)" }}>{day}</div>
+                  <div style={{ fontFamily: "var(--f-display)", fontSize: 13, fontWeight: 600, marginBottom: 2, color: "var(--ink-2)" }}>{day}</div>
                   <div style={{ display: "flex", gap: 8, paddingLeft: 4 }}>
                     <span style={{ color: "var(--accent)" }}>•</span>
-                    <span style={{ fontStyle: "italic", color: "var(--ink-2)", fontSize: 13 }}>{task}</span>
+                    <span style={{ fontStyle: "italic", color: "var(--ink-2)", fontSize: 12.5 }}>{task}</span>
                   </div>
                 </div>
               ))}
