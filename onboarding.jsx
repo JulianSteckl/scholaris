@@ -203,21 +203,62 @@ function Onboarding({ onComplete }) {
   const [mousePos, setMousePos] = React.useState({ x: -999, y: -999 });
   if (step === 0) {
     const WORD = "Notebook";
+    const FeatIcon = ({ id }) => {
+      const s = { fill: "none", stroke: "rgba(255,255,255,0.55)", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" };
+      const icons = {
+        notes: (
+          <svg width="22" height="22" viewBox="0 0 24 24" {...s}>
+            <path d="M12 20h-6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8l4 4v4"/>
+            <path d="M14 4v4h4"/>
+            <path d="M8 12h4M8 16h3"/>
+            <path d="M18 14l-4 4 4 2 4-6z"/>
+          </svg>
+        ),
+        homework: (
+          <svg width="22" height="22" viewBox="0 0 24 24" {...s}>
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <path d="M9 12l2 2 4-4"/>
+            <path d="M8 8h1M12 8h4"/>
+          </svg>
+        ),
+        schedule: (
+          <svg width="22" height="22" viewBox="0 0 24 24" {...s}>
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 3"/>
+          </svg>
+        ),
+        flashcards: (
+          <svg width="22" height="22" viewBox="0 0 24 24" {...s}>
+            <rect x="3" y="6" width="16" height="11" rx="2"/>
+            <path d="M5 4h14a2 2 0 0 1 2 2"/>
+            <path d="M9 12h6"/>
+          </svg>
+        ),
+        grades: (
+          <svg width="22" height="22" viewBox="0 0 24 24" {...s}>
+            <path d="M4 20V14M8 20V10M12 20V12M16 20V7M20 20V4"/>
+          </svg>
+        ),
+        ai: (
+          <svg width="22" height="22" viewBox="0 0 24 24" {...s}>
+            <path d="M12 3l1.5 3.5L17 8l-3.5 1.5L12 13l-1.5-3.5L7 8l3.5-1.5z"/>
+            <path d="M18 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" strokeWidth="1.2"/>
+            <path d="M5 16l.8 1.6 1.6.8-1.6.8L5 21l-.8-1.8-1.6-.8 1.6-.8z" strokeWidth="1.2"/>
+          </svg>
+        ),
+      };
+      return icons[id] || null;
+    };
     const featureCards = [
-      { icon: "✦", label: "Notes", desc: "Block-based editor with AI tools. Headings, quotes, checkboxes, and attachments — organized by unit." },
-      { icon: "◎", label: "Homework", desc: "Every assignment in one place. Urgency, due dates, time estimates. Never miss a deadline." },
-      { icon: "▤", label: "Schedule", desc: "Your daily and weekly view. See what's in session, what's due, and what's coming." },
-      { icon: "⟡", label: "Flashcards", desc: "Decks tied to your notes. Study with confidence tracking so you focus on what matters." },
-      { icon: "◈", label: "Grades", desc: "Letter grades with sparkline trends. Watch your progress build across the term." },
-      { icon: "✧", label: "AI Tools", desc: "Highlight any passage to explain it, generate a flashcard, or build a practice question." },
+      { iconId: "notes",      label: "Notes",      desc: "Block-based editor with AI tools. Headings, quotes, checkboxes, and attachments — organized by unit." },
+      { iconId: "homework",   label: "Homework",   desc: "Every assignment in one place. Urgency, due dates, time estimates. Never miss a deadline." },
+      { iconId: "schedule",   label: "Schedule",   desc: "Your daily and weekly view. See what's in session, what's due, and what's coming." },
+      { iconId: "flashcards", label: "Flashcards", desc: "Decks tied to your notes. Study with confidence tracking so you focus on what matters." },
+      { iconId: "grades",     label: "Grades",     desc: "Letter grades with sparkline trends. Watch your progress build across the term." },
+      { iconId: "ai",         label: "AI Tools",   desc: "Highlight any passage to explain it, generate a flashcard, or build a practice question." },
     ];
     const GIcon = () => (
-      <svg width="16" height="16" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-      </svg>
+      <span style={{ fontFamily: "var(--f-mono)", fontSize: 13, fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>G</span>
     );
     return (
       <div
@@ -283,7 +324,7 @@ function Onboarding({ onComplete }) {
             {/* Rule */}
             <div style={{ marginTop: 32, display: "flex", alignItems: "center", gap: 22, fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-3)", animation: "nb-fade-up 0.6s 1.35s both" }}>
               <span style={{ width: 64, height: 1, background: "var(--rule)" }} />
-              kept by you
+              printed for one reader
               <span style={{ width: 64, height: 1, background: "var(--rule)" }} />
             </div>
 
@@ -302,7 +343,7 @@ function Onboarding({ onComplete }) {
             )}
 
             {/* Scroll hint */}
-            <div style={{ marginTop: 48, fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, animation: "nb-fade-up 0.6s 1.8s both" }}>
+            <div style={{ marginTop: 48, fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.62)", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, animation: "nb-fade-up 0.6s 1.8s both" }}>
               <span>What's inside</span>
               <span style={{ fontSize: 16 }}>↓</span>
             </div>
@@ -326,7 +367,7 @@ function Onboarding({ onComplete }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px,1fr))", gap: 18, maxWidth: 1100, margin: "0 auto" }}>
             {featureCards.map((f) => (
               <div key={f.label} className="nb-feat-card" style={{ padding: "28px 28px 26px", border: "1px solid var(--hairline)", borderRadius: 8, background: "var(--surface)" }}>
-                <div style={{ fontFamily: "var(--f-display)", fontSize: 24, color: "var(--accent)", marginBottom: 14, lineHeight: 1 }}>{f.icon}</div>
+                <div style={{ marginBottom: 14, lineHeight: 1 }}><FeatIcon id={f.iconId} /></div>
                 <div style={{ fontFamily: "var(--f-display)", fontSize: 20, marginBottom: 8, color: "var(--ink)" }}>{f.label}</div>
                 <div style={{ fontSize: 13.5, lineHeight: 1.6, color: "var(--ink-2)" }}>{f.desc}</div>
               </div>
@@ -376,8 +417,8 @@ function Onboarding({ onComplete }) {
 
         {/* Left: Contents */}
         <div style={{
-          width: 180, borderRight: "1px solid rgba(255,255,255,0.07)",
-          padding: "36px 28px", display: "flex", flexDirection: "column",
+          width: 140, borderRight: "1px solid rgba(255,255,255,0.07)",
+          padding: "36px 20px", display: "flex", flexDirection: "column",
         }}>
           <div className="mono" style={{ fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.25)", marginBottom: 22 }}>CONTENTS</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
@@ -409,7 +450,7 @@ function Onboarding({ onComplete }) {
         {/* Center: Preview */}
         <div style={{
           flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          gap: 16, borderRight: "1px solid rgba(255,255,255,0.07)",
+          gap: 16, borderRight: "1px solid rgba(255,255,255,0.07)", padding: "0 24px",
         }}>
           <div className="mono" style={{ fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.2)" }}>PREVIEW</div>
           <PreviewCard />
@@ -417,7 +458,7 @@ function Onboarding({ onComplete }) {
 
         {/* Right: Form */}
         <div style={{
-          width: 420, padding: "48px 52px",
+          width: 460, padding: "48px 52px",
           display: "flex", flexDirection: "column", justifyContent: "center",
         }}>
           <div className="mono" style={{ fontSize: 9.5, letterSpacing: "0.16em", color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>
