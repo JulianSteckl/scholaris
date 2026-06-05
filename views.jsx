@@ -63,9 +63,49 @@ function deckForSubject(subjectId) {
   return Object.keys(DECKS).find(id => DECKS[id] && DECKS[id].subject === subjectId) || null;
 }
 
+function quizReadinessColor(c) {
+  if (c >= 0.7) return "var(--done)";
+  if (c >= 0.5) return "var(--ochre)";
+  return "var(--danger)";
+}
+function quizReadinessLabel(c) {
+  if (c >= 0.7) return "Solid";
+  if (c >= 0.5) return "OK";
+  return "Weak";
+}
+function quizReadinessBg(c) {
+  if (c >= 0.7) return "rgba(107,142,90,0.12)";
+  if (c >= 0.5) return "rgba(181,138,59,0.12)";
+  return "rgba(179,84,59,0.12)";
+}
+function quizUrgency(when) {
+  const w = (when || "").toLowerCase();
+  if (w === "today" || w === "tonight") return { label: "Today", color: "var(--danger)" };
+  if (w === "tomorrow")                 return { label: "Tomorrow", color: "var(--accent)" };
+  if (w === "thursday")                 return { label: "2 days", color: "var(--accent)" };
+  if (w === "friday")                   return { label: "3 days", color: "var(--ochre)" };
+  if (w.includes("next"))               return { label: "Next week", color: "var(--ink-3)" };
+  return { label: when || "TBD", color: "var(--ink-3)" };
+}
+
+const QUIZ_AI_RECS = {
+  "q1": { mode: "Flashcards",     reason: "Low confidence — multiple quick passes needed", weakTopic: "Electron transport chain" },
+  "q2": { mode: "Type the answer",reason: "Conjugation gaps — active recall helps most",   weakTopic: "Irregular preterite stems" },
+  "q3": { mode: "Written recall", reason: "Strong base — solidify with free-recall",        weakTopic: "Double-angle formulas" },
+};
+
+const QUIZ_STUDY_MODES = [
+  { mode: "flashcard",   icon: Ico.cards, label: "Flashcards",      desc: "Flip · spaced repetition",    accent: "#b58a3b", bg: "rgba(181,138,59,0.07)",  glyph: "↻" },
+  { mode: "mcq",         icon: Ico.quiz,  label: "Multiple choice", desc: "Auto-generated from any deck", accent: "#5a7a99", bg: "rgba(90,122,153,0.07)",  glyph: "?" },
+  { mode: "type",        icon: "Aa",      label: "Type the answer", desc: "Type the definition",          accent: "#7a4e6e", bg: "rgba(122,78,110,0.07)",  glyph: "Aa" },
+  { mode: "truefalse",   icon: "T/F",     label: "True / False",    desc: "Is this definition correct?",  accent: "#6b8e5a", bg: "rgba(107,142,90,0.07)",  glyph: "✓" },
+  { mode: "keyconcepts", icon: Ico.note,  label: "Key Concepts",    desc: "Study reference sheet",        accent: "#5b5346", bg: "rgba(91,83,70,0.06)",    glyph: "§" },
+  { mode: "written",     icon: Ico.book,  label: "Written recall",  desc: "Free-write what you know",     accent: "#c8694a", bg: "rgba(200,105,74,0.07)",  glyph: "✍" },
+];
+
 function QuizzesContent({ onTakeQuiz }) {
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
-  const [picker, setPicker] = React.useState(null); // mode string or null
+  const [picker, setPicker] = React.useState(null);
 
   React.useEffect(() => {
     const on = () => forceUpdate();
@@ -82,19 +122,26 @@ function QuizzesContent({ onTakeQuiz }) {
     { id: "p4", subject: "spanish-3", title: "Vocab U5",               score: 13, total: 15, when: "Apr 22" },
   ] : [];
 
-  const totalUpcoming = QUIZZES_UPCOMING.length + userQuizzes.length;
+  const allUpcoming = [...QUIZZES_UPCOMING, ...userQuizzes];
+  const totalUpcoming = allUpcoming.length;
+
+  const avgScore = past.length > 0
+    ? Math.round(past.reduce((a, p) => a + p.score / p.total, 0) / past.length * 100)
+    : null;
+  const avgReadiness = allUpcoming.length > 0
+    ? Math.round(allUpcoming.reduce((a, q) => a + (q.confidence || 0), 0) / allUpcoming.length * 100)
+    : null;
+
+  const subjectScoreMap = {};
+  past.forEach(p => { if (!subjectScoreMap[p.subject]) subjectScoreMap[p.subject] = []; subjectScoreMap[p.subject].push(p.score / p.total); });
+  let bestSubject = null, bestAvg = 0;
+  Object.entries(subjectScoreMap).forEach(([id, scores]) => {
+    const avg = scores.reduce((a, x) => a + x, 0) / scores.length;
+    if (avg > bestAvg) { bestAvg = avg; bestSubject = subjectBy(id); }
+  });
 
   const launchMode = (mode, deckId) => onTakeQuiz(mode, deckId);
-  const openPicker = (mode) => setPicker(mode);
-
-  const STUDY_MODES = [
-    { mode: "flashcard",   icon: Ico.cards, label: "Flashcards",      desc: "Flip · spaced repetition",     accent: "var(--accent)" },
-    { mode: "mcq",         icon: Ico.quiz,  label: "Multiple choice", desc: "Auto-generated from any deck",  accent: "var(--info)" },
-    { mode: "type",        icon: "Aa",      label: "Type the answer", desc: "Type the definition",           accent: "var(--plum)" },
-    { mode: "truefalse",   icon: "T/F",     label: "True / False",    desc: "Is this definition correct?",   accent: "var(--done)" },
-    { mode: "keyconcepts", icon: Ico.note,  label: "Key Concepts",    desc: "Study reference sheet",         accent: "var(--ink-2)" },
-    { mode: "written",     icon: Ico.book,  label: "Written recall",  desc: "Free-write what you know",      accent: "var(--ink-3)" },
-  ];
+  const openPicker  = (mode) => setPicker(mode);
 
   return (
     <>
@@ -106,80 +153,271 @@ function QuizzesContent({ onTakeQuiz }) {
         />
       )}
 
-      <PageHeader
-        eyebrow={totalUpcoming > 0 ? `${totalUpcoming} upcoming · ${past.length} taken this term` : "Practice anytime · all subjects"}
-        title="Study &"
-        italic="practice."
-        meta="Pick a mode and a deck — quiz yourself on anything"
-        actions={<button className="sn-btn primary" onClick={() => window.dispatchEvent(new CustomEvent("openQuickAdd", { detail: { type: "quiz" } }))}>+ Add quiz day</button>}
-      />
-
-      {totalUpcoming > 0 && <>
-        <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 12px" }}>Upcoming</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14, marginBottom: 32 }}>
-          {[...QUIZZES_UPCOMING, ...userQuizzes].map((q) => {
-            const s = subjectBy(q.subject) || SUBJECTS[0];
-            const deckId = deckForSubject(q.subject);
-            return (
-              <div key={q.id} className="sn-card" style={{ borderLeft: `3px solid ${s.color}`, cursor: "pointer" }}
-                onClick={() => window.location.hash = "#/quiz-detail/" + q.id}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-                  <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em" }}>{s.short} · {q.when || q.dateStr || "TBD"}</div>
-                  {q.length && <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)" }}>{q.length}</div>}
-                </div>
-                <div className="serif" style={{ fontFamily: "var(--f-display)", fontSize: 20, lineHeight: 1.2 }}>{q.title}</div>
-                {q.confidence != null && <div style={{ marginTop: 10, marginBottom: 12 }}><ConfidenceMeter value={q.confidence} /></div>}
-                <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
-                  <button className="sn-btn primary" onClick={e => { e.stopPropagation(); window.location.hash = "#/quiz-detail/" + q.id; }} style={{ flex: 1, justifyContent: "center" }}>Open →</button>
-                  <button className="sn-btn" title="Flashcards" onClick={e => { e.stopPropagation(); launchMode("flashcard", "subject-" + q.subject); }} style={{ padding: "7px 10px" }}>{Ico.cards}</button>
-                  <button className="sn-btn" title="Multiple choice" onClick={e => { e.stopPropagation(); launchMode("mcq", "subject-" + q.subject); }} style={{ padding: "7px 10px" }}>{Ico.quiz}</button>
-                </div>
-              </div>
-            );
-          })}
+      {/* ── PAGE HEADER ── */}
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 5 }}>
+          Study &amp; Practice · This Week
         </div>
-      </>}
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <h1 style={{ fontFamily: "var(--f-display)", fontSize: 36, fontWeight: 400, margin: 0, lineHeight: 1.05, letterSpacing: "-0.015em" }}>
+            Study &amp; <em style={{ fontStyle: "italic", color: "var(--accent)" }}>practice.</em>
+          </h1>
+          <button className="sn-btn primary"
+            onClick={() => window.dispatchEvent(new CustomEvent("openQuickAdd", { detail: { type: "quiz" } }))}>
+            + Add quiz day
+          </button>
+        </div>
+        <div className="sn-ornament" style={{ margin: "10px 0 6px" }} />
+        <div style={{ fontFamily: "var(--f-mono)", fontSize: 11.5, color: "var(--ink-3)" }}>
+          {totalUpcoming > 0
+            ? `${totalUpcoming} upcoming · ${past.length} taken this term · pick a mode and a deck`
+            : "Practice anytime · all subjects"}
+        </div>
+      </div>
 
-      <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 14px" }}>Study modes</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 32 }}>
-        {STUDY_MODES.map(({ mode, icon, label, desc, accent }) => (
-          <div key={mode} onClick={() => openPicker(mode)}
-            style={{ padding: "18px 16px", background: "var(--surface)", border: "1px solid var(--hairline)",
-              borderRadius: 8, cursor: "pointer", transition: "border-color 0.15s", borderTop: `3px solid ${accent}` }}>
-            <div style={{ fontSize: typeof icon === "string" ? 14 : 16, color: accent, marginBottom: 10, fontFamily: "var(--f-mono)", fontWeight: 600 }}>
-              {icon}
+      {/* ── HERO STATS BAR ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 28 }}>
+        {[
+          { label: "Quizzes This Week", val: totalUpcoming,    sub: "upcoming",          isNum: true },
+          { label: "Avg Score",         val: avgScore != null ? avgScore + "%" : "—",    sub: "last 4 results",    isNum: false, accent: avgScore != null ? (avgScore >= 80 ? "var(--done)" : avgScore >= 65 ? "var(--accent)" : "var(--danger)") : null },
+          { label: "Best Subject",      val: bestSubject ? bestSubject.short : "—",       sub: bestSubject ? Math.round(bestAvg * 100) + "% avg" : "no data", isNum: false, dot: bestSubject ? bestSubject.color : null },
+          { label: "Readiness",         val: avgReadiness != null ? avgReadiness + "%" : "—", sub: "across upcoming", isNum: false, accent: avgReadiness != null ? quizReadinessColor(avgReadiness / 100) : null },
+        ].map((m, i) => (
+          <div key={i} style={{
+            background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius)",
+            padding: "13px 14px", animation: "fade-up .18s ease both", animationDelay: (i * 0.045) + "s",
+            transition: "border-color .14s, box-shadow .14s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--rule)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(30,20,8,0.09)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--hairline)"; e.currentTarget.style.boxShadow = "none"; }}>
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 7 }}>{m.label}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {m.dot && <div style={{ width: 8, height: 8, borderRadius: 1, background: m.dot, flexShrink: 0 }} />}
+              <div style={{ fontFamily: m.isNum ? "var(--f-display)" : "var(--f-mono)", fontSize: m.isNum ? 26 : 18, fontWeight: 400, lineHeight: 1, color: m.accent || "var(--ink)", letterSpacing: m.isNum ? "-0.02em" : 0 }}>{m.val}</div>
             </div>
-            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>{label}</div>
-            <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)" }}>{desc}</div>
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 6 }}>{m.sub}</div>
           </div>
         ))}
       </div>
 
-      {past.length > 0 && <>
-        <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 12px" }}>Past results</div>
-        <div className="sn-card" style={{ padding: 0 }}>
-          {past.map((p, i) => {
-            const s = subjectBy(p.subject);
-            const pct = p.score / p.total;
-            return (
-              <div key={p.id} onClick={() => openPicker("mcq")}
-                style={{ display: "grid", gridTemplateColumns: "8px 1fr auto auto auto", alignItems: "center",
-                  gap: 14, padding: "14px 20px", borderBottom: i < past.length - 1 ? "1px dashed var(--hairline)" : "none", cursor: "pointer" }}>
-                <div style={{ width: 8, height: 28, borderRadius: 2, background: s.color }} />
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>{p.title}</div>
-                  <div style={{ fontFamily: "var(--f-mono)", fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>{s.short.toUpperCase()} · {p.when}</div>
-                </div>
-                <div className="serif" style={{ fontFamily: "var(--f-display)", fontSize: 22, color: pct >= 0.8 ? "var(--done)" : pct >= 0.65 ? "var(--accent)" : "var(--danger)" }}>
-                  {p.score}<span style={{ color: "var(--ink-3)" }}>/{p.total}</span>
-                </div>
-                <div style={{ fontFamily: "var(--f-mono)", fontSize: 11, color: "var(--ink-2)" }}>{Math.round(pct * 100)}%</div>
-                <span style={{ color: "var(--ink-3)" }}>{Ico.arrow}</span>
+      {/* ── TWO-COLUMN LAYOUT: main + sidebar ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 268px", gap: 22, alignItems: "start" }}>
+
+        {/* ── LEFT MAIN ── */}
+        <div>
+
+          {/* Upcoming quizzes */}
+          {allUpcoming.length > 0 && (
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>
+                Upcoming · {allUpcoming.length} quiz{allUpcoming.length !== 1 ? "zes" : ""}
               </div>
-            );
-          })}
-        </div>
-      </>}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))", gap: 14 }}>
+                {allUpcoming.map((q) => {
+                  const s = subjectBy(q.subject) || SUBJECTS[0];
+                  const deckId = deckForSubject(q.subject);
+                  const urgency = quizUrgency(q.when || q.dateStr);
+                  const conf = q.confidence;
+                  const rColor = conf != null ? quizReadinessColor(conf) : "var(--ink-3)";
+                  const rLabel = conf != null ? quizReadinessLabel(conf) : null;
+                  const rBg    = conf != null ? quizReadinessBg(conf)    : "transparent";
+                  return (
+                    <div key={q.id} className="sn-card"
+                      style={{ borderLeft: `3px solid ${s.color}`, cursor: "pointer", display: "flex", flexDirection: "column" }}
+                      onClick={() => window.location.hash = "#/quiz-detail/" + q.id}>
+
+                      {/* Top: subject + urgency */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: 1, background: s.color, flexShrink: 0 }} />
+                          <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{s.short}</span>
+                        </div>
+                        <span style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: urgency.color, fontWeight: 600 }}>{urgency.label}</span>
+                      </div>
+
+                      {/* Title */}
+                      <div className="serif" style={{ fontFamily: "var(--f-display)", fontSize: 19, lineHeight: 1.25, marginBottom: 14 }}>{q.title}</div>
+
+                      {/* Readiness indicator */}
+                      {conf != null && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 9px", borderRadius: 5, background: rBg, flexShrink: 0 }}>
+                            <span style={{ fontFamily: "var(--f-display)", fontSize: 20, fontWeight: 700, lineHeight: 1, color: rColor }}>{Math.round(conf * 100)}%</span>
+                            <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: rColor, lineHeight: 1.3 }}>{rLabel}<br/>ready</div>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ height: 5, background: "var(--bg-2)", borderRadius: 3, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: (conf * 100) + "%", background: rColor, borderRadius: 3, transition: "width 0.4s ease" }} />
+                            </div>
+                            {q.length && <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", marginTop: 4 }}>{q.length}</div>}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* CTAs */}
+                      <div style={{ display: "flex", gap: 6, marginTop: "auto" }}>
+                        <button className="sn-btn primary"
+                          onClick={e => { e.stopPropagation(); launchMode("flashcard", deckId || "subject-" + q.subject); }}
+                          style={{ flex: 1, justifyContent: "center", fontSize: 12.5 }}>
+                          Study now →
+                        </button>
+                        <button className="sn-btn" title="Multiple choice"
+                          onClick={e => { e.stopPropagation(); launchMode("mcq", "subject-" + q.subject); }}
+                          style={{ padding: "7px 10px" }}>{Ico.quiz}</button>
+                        <button className="sn-btn" title="View detail"
+                          onClick={e => { e.stopPropagation(); window.location.hash = "#/quiz-detail/" + q.id; }}
+                          style={{ padding: "7px 10px" }}>{Ico.arrow}</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Study modes — differentiated grid */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 14 }}>Study modes</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              {QUIZ_STUDY_MODES.map(({ mode, icon, label, desc, accent, bg, glyph }) => (
+                <div key={mode} onClick={() => openPicker(mode)}
+                  style={{ padding: "18px 16px 14px", background: bg, border: "1px solid " + accent + "30",
+                    borderRadius: 8, cursor: "pointer", position: "relative", overflow: "hidden",
+                    transition: "border-color 0.15s, box-shadow 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = accent + "70"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(30,20,8,0.07)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = accent + "30"; e.currentTarget.style.boxShadow = "none"; }}>
+                  {/* Watermark glyph */}
+                  <div style={{ position: "absolute", right: 8, bottom: -8, fontFamily: "var(--f-display)", fontSize: 54, color: accent, opacity: 0.1, pointerEvents: "none", lineHeight: 1, fontStyle: "italic", userSelect: "none" }}>
+                    {glyph}
+                  </div>
+                  <div style={{ fontSize: 15, color: accent, marginBottom: 10, fontFamily: "var(--f-mono)", fontWeight: 700 }}>{icon}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4, color: "var(--ink)" }}>{label}</div>
+                  <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", marginBottom: 10 }}>{desc}</div>
+                  <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: accent, textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 4 }}>
+                    Start {Ico.arrow}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Past results — performance panel */}
+          {past.length > 0 && (
+            <div>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>Past results</div>
+              <div className="sn-card" style={{ padding: 0 }}>
+                {past.map((p, i) => {
+                  const s = subjectBy(p.subject);
+                  const pct = p.score / p.total;
+                  const pColor = pct >= 0.8 ? "var(--done)" : pct >= 0.65 ? "var(--accent)" : "var(--danger)";
+                  return (
+                    <div key={p.id} onClick={() => openPicker("mcq")}
+                      style={{ display: "grid", gridTemplateColumns: "4px 1fr auto", alignItems: "center", gap: 14,
+                        padding: "14px 18px", borderBottom: i < past.length - 1 ? "1px dashed var(--hairline)" : "none",
+                        cursor: "pointer", transition: "background 0.12s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "var(--bg-2)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <div style={{ width: 4, alignSelf: "stretch", minHeight: 32, borderRadius: 2, background: s.color }} />
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>{p.title}</div>
+                        <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", marginBottom: 8 }}>
+                          {s.short.toUpperCase()} · {p.when}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ width: 110, height: 4, background: "var(--bg-2)", borderRadius: 2, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: (pct * 100) + "%", background: pColor, borderRadius: 2, transition: "width 0.4s ease" }} />
+                          </div>
+                          <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>{Math.round(pct * 100)}%</span>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5 }}>
+                        <div className="serif" style={{ fontFamily: "var(--f-display)", fontSize: 24, color: pColor, lineHeight: 1 }}>
+                          {p.score}<span style={{ color: "var(--ink-3)", fontSize: 15 }}>/{p.total}</span>
+                        </div>
+                        <span style={{ color: "var(--ink-3)" }}>{Ico.arrow}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+        </div>{/* end left */}
+
+        {/* ── RIGHT SIDEBAR ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+          {/* AI study recommendations */}
+          {allUpcoming.length > 0 && (
+            <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", overflow: "hidden" }}>
+              <div style={{ padding: "13px 16px 11px", borderBottom: "1px solid var(--hairline)", display: "flex", alignItems: "center", gap: 7 }}>
+                <span style={{ color: "var(--accent)", fontSize: 11, opacity: 0.8 }}>✦</span>
+                <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)" }}>AI Study Guide</div>
+              </div>
+              {allUpcoming.map((q, i) => {
+                const s = subjectBy(q.subject) || SUBJECTS[0];
+                const deckId = deckForSubject(q.subject);
+                const rec = QUIZ_AI_RECS[q.id] || { mode: "Flashcards", reason: "Review all topics before the test.", weakTopic: null };
+                return (
+                  <div key={q.id} style={{ padding: "14px 16px", borderBottom: i < allUpcoming.length - 1 ? "1px dashed var(--hairline)" : "none" }}>
+                    {/* Quiz label */}
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 3, alignSelf: "stretch", minHeight: 24, borderRadius: 2, background: s.color, flexShrink: 0, marginTop: 2 }} />
+                      <div>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.3, color: "var(--ink)" }}>{q.title}</div>
+                        <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", marginTop: 2 }}>{s.short} · {q.when || "TBD"}</div>
+                      </div>
+                    </div>
+                    {/* Recommended mode */}
+                    <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-3)", marginBottom: 5 }}>Recommended</div>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 9px", borderRadius: 4, background: "var(--accent-soft)", marginBottom: 6 }}>
+                      <span style={{ fontFamily: "var(--f-mono)", fontSize: 11, color: "var(--accent-ink)", fontWeight: 600 }}>{rec.mode}</span>
+                    </div>
+                    <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", lineHeight: 1.5, marginBottom: rec.weakTopic ? 8 : 10 }}>{rec.reason}</div>
+                    {/* Weak topic callout */}
+                    {rec.weakTopic && (
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "7px 9px", borderRadius: 5, background: "rgba(179,84,59,0.08)", marginBottom: 10 }}>
+                        <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--danger)", flexShrink: 0 }}>Weak</span>
+                        <span style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.4 }}>{rec.weakTopic}</span>
+                      </div>
+                    )}
+                    {/* Quick launch */}
+                    <button className="sn-btn" style={{ fontSize: 11.5, width: "100%", justifyContent: "center" }}
+                      onClick={() => launchMode("flashcard", deckId || "subject-" + q.subject)}>
+                      Study {s.short} now →
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Score trend panel */}
+          {past.length > 0 && (
+            <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: "14px 16px" }}>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)", marginBottom: 14 }}>Score Trend</div>
+              {past.map((p, i) => {
+                const s = subjectBy(p.subject);
+                const pct = p.score / p.total;
+                const pColor = pct >= 0.8 ? "var(--done)" : pct >= 0.65 ? "var(--accent)" : "var(--danger)";
+                return (
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: i < past.length - 1 ? 9 : 0 }}>
+                    <div style={{ width: 3, height: 20, borderRadius: 2, background: s.color, flexShrink: 0 }} />
+                    <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", width: 38, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.short}</div>
+                    <div style={{ flex: 1, height: 5, background: "var(--bg-2)", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: (pct * 100) + "%", background: pColor, borderRadius: 3, transition: "width 0.5s ease" }} />
+                    </div>
+                    <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: pColor, width: 30, textAlign: "right", flexShrink: 0 }}>{Math.round(pct * 100)}%</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        </div>{/* end sidebar */}
+
+      </div>{/* end two-col */}
     </>
   );
 }
