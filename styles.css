@@ -614,3 +614,199 @@ body, html { margin: 0; padding: 0; }
   border-radius: 0 0 3px 3px;
   transition: width 30s linear;
 }
+
+/* ═══════════════════════════════════════════════════════
+   MOTION SYSTEM
+   Philosophy: "Motion communicates state, not decoration."
+   Linear · Raycast · Arc · Apple-grade polish
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --dur-micro:  150ms;
+  --dur-hover:  150ms;
+  --dur-ui:     200ms;
+  --dur-page:   250ms;
+  --dur-modal:  250ms;
+  --dur-layout: 320ms;
+  --dur-bar:    820ms;
+}
+
+/* ── Reduced motion — respect user preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1      !important;
+    transition-duration:       0.01ms !important;
+    scroll-behavior:           auto   !important;
+  }
+}
+
+/* ── Page entrance — fade up from 8px ── */
+@keyframes sn-page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.sn-page-enter {
+  animation: sn-page-enter var(--dur-page) var(--ease-out) both;
+}
+
+/* ── Card stagger entrance ── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Modal / overlay ── */
+@keyframes sn-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes sn-modal-in {
+  from { opacity: 0; transform: scale(0.97) translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.sn-overlay-enter {
+  animation: sn-overlay-in var(--dur-modal) var(--ease-out) both;
+}
+.sn-modal-enter {
+  animation: sn-modal-in var(--dur-modal) var(--ease-out) both;
+  transform-origin: center 40%;
+}
+
+/* ── Progress bar fill — clip-path reveal, any width ── */
+@keyframes sn-bar-grow {
+  from { clip-path: inset(0 100% 0 0 round 3px); }
+  to   { clip-path: inset(0 0%   0 0 round 3px); }
+}
+.sn-bar-fill {
+  animation: sn-bar-grow var(--dur-bar) var(--ease-out) both;
+  animation-delay: 180ms;
+}
+
+/* ── AI insight / slide-in from left ── */
+@keyframes sn-slide-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: none; }
+}
+.sn-slide-left {
+  animation: sn-slide-left 250ms var(--ease-out) both;
+}
+
+/* ── Drawer slide in from right ── */
+@keyframes sn-slide-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: none; }
+}
+.sn-drawer-enter {
+  animation: sn-slide-right var(--dur-layout) var(--ease-out) both;
+}
+
+/* ── Scroll reveal — trigger via JS IntersectionObserver ── */
+@keyframes sn-reveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+.sn-reveal { opacity: 0; }
+.sn-reveal.visible {
+  animation: sn-reveal var(--dur-layout) var(--ease-out) both;
+}
+
+/* ── Buttons — hover lift + click press ── */
+.sn-btn {
+  transition:
+    transform      var(--dur-micro) var(--ease-out),
+    background     var(--dur-hover) var(--ease-out),
+    border-color   var(--dur-hover) var(--ease-out),
+    color          var(--dur-hover) var(--ease-out),
+    box-shadow     var(--dur-hover) var(--ease-out);
+  will-change: transform;
+}
+.sn-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.sn-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  transition-duration: var(--dur-micro);
+}
+
+/* ── Cards — 2px lift + shadow bloom ── */
+.sn-card {
+  transition:
+    transform    var(--dur-hover) var(--ease-out),
+    box-shadow   var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out);
+  will-change: transform;
+}
+.sn-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--rule);
+  box-shadow:
+    0 0 0 0.5px rgba(40,28,12,0.06),
+    0 1px 0  rgba(255,255,255,0.72) inset,
+    0 6px 20px rgba(30,20,8,0.12),
+    0 12px 36px rgba(30,20,8,0.07),
+    0 2px 0 0 var(--rule);
+}
+
+/* Subject cards */
+.subj-card {
+  transition:
+    transform    var(--dur-hover) var(--ease-out),
+    box-shadow   var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out);
+  will-change: transform;
+}
+.subj-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--rule);
+  box-shadow: 0 6px 24px rgba(30,20,8,0.11);
+}
+
+/* ── Sidebar nav — smooth state + subtle hover lift ── */
+.sn-nav-item {
+  transition:
+    background   var(--dur-hover) var(--ease-out),
+    color        var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out),
+    transform    var(--dur-hover) var(--ease-out);
+}
+.sn-sidebar .sn-nav-item:not(.active):hover { transform: translateY(-1px); }
+
+/* ── Search bar — Raycast-style focus expansion ── */
+.sn-search {
+  transition:
+    max-width    var(--dur-ui)    var(--ease-out),
+    border-color var(--dur-ui)    var(--ease-out),
+    background   var(--dur-ui)    var(--ease-out),
+    box-shadow   var(--dur-ui)    var(--ease-out);
+}
+.sn-search:focus-within {
+  max-width: 400px;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(160, 120, 48, 0.09);
+}
+
+/* ── Schedule — today card ambient pulse ── */
+@keyframes sn-today-glow {
+  0%,  100% { box-shadow: 0 0 0 0   rgba(160,120,48,0), inset 0 0 0 0 rgba(255,255,255,0); }
+  50%        { box-shadow: 0 0 0 5px rgba(160,120,48,0.10), inset 0 1px 0 rgba(255,255,255,0.1); }
+}
+.sched-day.today {
+  animation: sn-today-glow 3.5s var(--ease-in-out) infinite;
+  animation-delay: 0.8s;
+}
+
+/* ── Homework row ── */
+.hw-row {
+  transition:
+    background var(--dur-hover)  var(--ease-out),
+    opacity    250ms             var(--ease-out),
+    transform  250ms             var(--ease-out);
+}
+.hw-row.done { opacity: 0.52; }
+.hw-title { transition: color 250ms var(--ease-out); }
+
+/* ── Quick action icon nudge ── */
+.sn-quick-icon { transition: transform var(--dur-micro) var(--ease-out); }
+.sn-quick-action:hover .sn-quick-icon { transform: translateX(2px); }

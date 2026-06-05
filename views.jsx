@@ -21,9 +21,9 @@ const MODE_LABELS = {
 function SubjectPickerModal({ mode, onPick, onClose }) {
   const store = useNbStore();
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
+    <div className="sn-overlay-enter" style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 12,
+      <div className="sn-modal-enter" style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 12,
         boxShadow: "0 16px 48px rgba(0,0,0,0.3)", width: 420, maxHeight: "72vh", display: "flex", flexDirection: "column" }}>
         <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--hairline)" }}>
           <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em" }}>{MODE_LABELS[mode]}</div>
@@ -247,7 +247,7 @@ function QuizzesContent({ onTakeQuiz }) {
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ height: 5, background: "var(--bg-2)", borderRadius: 3, overflow: "hidden" }}>
-                              <div style={{ height: "100%", width: (conf * 100) + "%", background: rColor, borderRadius: 3, transition: "width 0.4s ease" }} />
+                              <div className="sn-bar-fill" style={{ height: "100%", width: (conf * 100) + "%", background: rColor, borderRadius: 3 }} />
                             </div>
                             {q.length && <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", marginTop: 4 }}>{q.length}</div>}
                           </div>
@@ -325,7 +325,7 @@ function QuizzesContent({ onTakeQuiz }) {
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ width: 110, height: 4, background: "var(--bg-2)", borderRadius: 2, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: (pct * 100) + "%", background: pColor, borderRadius: 2, transition: "width 0.4s ease" }} />
+                            <div className="sn-bar-fill" style={{ height: "100%", width: (pct * 100) + "%", background: pColor, borderRadius: 2 }} />
                           </div>
                           <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>{Math.round(pct * 100)}%</span>
                         </div>
@@ -406,7 +406,7 @@ function QuizzesContent({ onTakeQuiz }) {
                     <div style={{ width: 3, height: 20, borderRadius: 2, background: s.color, flexShrink: 0 }} />
                     <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", width: 38, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.short}</div>
                     <div style={{ flex: 1, height: 5, background: "var(--bg-2)", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: (pct * 100) + "%", background: pColor, borderRadius: 3, transition: "width 0.5s ease" }} />
+                      <div className="sn-bar-fill" style={{ height: "100%", width: (pct * 100) + "%", background: pColor, borderRadius: 3 }} />
                     </div>
                     <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: pColor, width: 30, textAlign: "right", flexShrink: 0 }}>{Math.round(pct * 100)}%</div>
                   </div>

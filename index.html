@@ -56,15 +56,15 @@
 <script type="text/babel" src="tweaks-panel.jsx?v=4"></script>
 <script type="text/babel" src="data.jsx?v=4"></script>
 <script type="text/babel" src="store.jsx?v=4"></script>
-<script type="text/babel" src="shell.jsx?v=4"></script>
-<script type="text/babel" src="dashboard.jsx?v=4"></script>
+<script type="text/babel" src="shell.jsx?v=5"></script>
+<script type="text/babel" src="dashboard.jsx?v=5"></script>
 <script type="text/babel" src="homework.jsx?v=5"></script>
 <script type="text/babel" src="subjects.jsx?v=4"></script>
 <script type="text/babel" src="quizzes.jsx?v=4"></script>
-<script type="text/babel" src="views.jsx?v=6"></script>
+<script type="text/babel" src="views.jsx?v=7"></script>
 <script type="text/babel" src="subject-overview.jsx?v=4"></script>
 <script type="text/babel" src="mobile.jsx?v=4"></script>
-<script type="text/babel" src="interactions.jsx?v=4"></script>
+<script type="text/babel" src="interactions.jsx?v=5"></script>
 
 <script type="text/babel" data-presets="env,react">
 /* global DashCombined, DashFocus, DashTimeline, ToolsContent, HomeworkContent, HomeworkDetailPage,
@@ -166,6 +166,20 @@ function App() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  // Scroll reveal — observe .sn-reveal elements after each navigation
+  React.useEffect(() => {
+    const content = document.querySelector(".sn-content");
+    if (!content || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); obs.unobserve(e.target); } });
+    }, { root: content, threshold: 0.08 });
+    // Small delay lets React finish painting the new route
+    const t = setTimeout(() => {
+      content.querySelectorAll(".sn-reveal:not(.visible)").forEach(el => obs.observe(el));
+    }, 80);
+    return () => { clearTimeout(t); obs.disconnect(); };
+  }, [route]);
 
 
   React.useEffect(() => {
@@ -340,7 +354,13 @@ function App() {
               route.view === "homework-detail" ? { padding: 0, display: "flex", overflow: "hidden" } :
               undefined
             }>
-              <RouteView route={route} go={go} tweaks={tweaks} setTweak={setTweak} />
+              <div
+                key={route.view + "/" + (route.id || "") + "/" + (route.sub || "")}
+                className={(!isNote && !isQuiz && route.view !== "homework-detail") ? "sn-page-enter" : undefined}
+                style={(isNote || isQuiz || route.view === "homework-detail") ? { flex: 1, display: "flex", minHeight: 0 } : undefined}
+              >
+                <RouteView route={route} go={go} tweaks={tweaks} setTweak={setTweak} />
+              </div>
             </div>
           </main>
         </div>

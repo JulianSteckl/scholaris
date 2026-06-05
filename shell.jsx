@@ -290,7 +290,7 @@ function ConfidenceMeter({ value }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <div style={{ width: 60, height: 3, background: "var(--hairline)", borderRadius: 2, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: color, transition: "width .4s ease" }}></div>
+        <div className="sn-bar-fill" style={{ width: `${pct}%`, height: "100%", background: color }}></div>
       </div>
       <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color, letterSpacing: "0.04em" }}>{pct}%</span>
       <span style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>

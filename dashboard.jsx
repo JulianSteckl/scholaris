@@ -113,7 +113,7 @@ Use real, helpful content based on their description. Make it genuinely useful f
       background: "var(--surface)", borderLeft: "1px solid var(--hairline)",
       boxShadow: "-12px 0 28px -16px rgba(20,16,11,0.18)",
       display: "flex", flexDirection: "column",
-      animation: "slide-in 0.22s ease",
+      animation: "sn-slide-right var(--dur-layout) var(--ease-out) both",
     }}>
       <div style={{ padding: "20px 22px 14px", borderBottom: "1px solid var(--hairline)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
