@@ -4045,7 +4045,7 @@ function computeSuggestions(tools) {
 // ── Format activity for display ────────────────────────────────────────────────
 function formatActivity(rawActivity) {
   var now = Date.now();
-  return rawActivity.map(function(item) {
+  var mapped = rawActivity.map(function(item) {
     var diff = now - item.ts;
     var m  = Math.floor(diff / 60000);
     var h  = Math.floor(diff / 3600000);
@@ -4057,14 +4057,29 @@ function formatActivity(rawActivity) {
     else              { time = dy + "d ago";   group = "older"; }
     var base = TOOLS_BASE.find(function(t) { return t.id === item.toolId; });
     return {
-      id:    String(item.ts) + "_" + item.toolId,
-      label: "Opened " + item.toolName,
-      tool:  item.toolName,
-      time:  time,
-      group: group,
-      color: base ? base.color : "#888",
+      id:     String(item.ts) + "_" + item.toolId,
+      toolId: item.toolId,
+      label:  "Opened " + item.toolName,
+      tool:   item.toolName,
+      time:   time,
+      ts:     item.ts,
+      group:  group,
+      color:  base ? base.color : "#888",
     };
   }).filter(function(a) { return a.group !== "older"; });
+
+  // Deduplicate: collapse consecutive same-tool opens within the same group
+  var deduped = [];
+  mapped.forEach(function(item) {
+    var last = deduped[deduped.length - 1];
+    if (last && last.toolId === item.toolId && last.group === item.group) {
+      last.count = (last.count || 1) + 1;
+      last.label = "Opened " + item.tool + " · " + last.count + "×";
+    } else {
+      deduped.push(Object.assign({}, item, { count: 1 }));
+    }
+  });
+  return deduped;
 }
 
 // ── ToolIcon ───────────────────────────────────────────────────────────────────
@@ -4170,8 +4185,9 @@ function ToolRow({ tool }) {
       {/* Tool identity */}
       <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
         <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0,
-          background: tool.color + "18", border: "1px solid " + tool.color + "30",
-          display: "flex", alignItems: "center", justifyContent: "center" }}>
+          background: tool.color + "12", border: "1px solid " + tool.color + "22",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          filter: "saturate(0.7) brightness(0.88)" }}>
           <ToolIcon id={tool.id} color={tool.color} />
         </div>
         <div style={{ minWidth: 0 }}>
@@ -4207,9 +4223,13 @@ function ToolRow({ tool }) {
       <div style={{ textAlign: "right" }}>
         {tool.isNew
           ? <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, textTransform: "uppercase", letterSpacing: "0.08em",
-              color: C.ink3, background: C.bg2, border: "1px solid " + C.border, padding: "3px 7px", borderRadius: 4 }}>new</span>
-          : <span style={{ fontFamily: "var(--f-mono)", fontSize: 10,
-              color: tool.trendUp ? C.green : (tool.trend === "—" ? C.ink3 : C.red) }}>{tool.trend}</span>
+              color: C.ink3, opacity: 0.55, padding: "3px 0" }}>new</span>
+          : tool.trending
+            ? <span style={{ fontFamily: "var(--f-mono)", fontSize: 9,
+                color: C.green, background: C.green + "14", border: "1px solid " + C.green + "28",
+                padding: "2px 6px", borderRadius: 4 }}>↑ {tool.delta}</span>
+            : <span style={{ fontFamily: "var(--f-mono)", fontSize: 10,
+                color: tool.trendUp ? C.green : (tool.trend === "—" ? C.ink3 : C.red) }}>{tool.trend}</span>
         }
       </div>
     </a>
@@ -4232,7 +4252,7 @@ function StatsStrip({ tools, activity }) {
     { label: "Connected",   value: String(connected) + " / " + TOOLS_BASE.length, sub: connected > 0 ? connected + " tools used" : "Use a tool to track it", subColor: C.ink3 },
     { label: "Last Opened", value: lastOpened ? lastOpened.toolName : "—",
       sub: lastOpened ? formatTs(lastOpened.ts) + " · " + (lastBase ? lastBase.category : "") : "No activity yet",
-      subColor: C.ink3, valueColor: lastBase ? lastBase.color : C.ink },
+      subColor: C.ink3, valueColor: C.ink },
   ];
 
   return (
@@ -4440,7 +4460,7 @@ function UsageBreakdownPanel({ tools }) {
   const top4 = tools.filter(function(t) { return t.sessions > 0; }).slice(0, 4);
   const maxSessions = top4.length > 0 ? top4[0].sessions : 1;
   return (
-    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden" }}>
+    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2 }}>
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink2 }}>Usage Breakdown</span>
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: C.ink3 }}>all time</span>
@@ -4449,6 +4469,37 @@ function UsageBreakdownPanel({ tools }) {
         ? top4.map(function(u, i) { return <UsageRow key={u.id} u={u} isLast={i === top4.length - 1} maxSessions={maxSessions} />; })
         : <div style={{ padding: "16px 14px", fontFamily: "var(--f-mono)", fontSize: 11, color: C.ink3, textAlign: "center" }}>No usage data yet.</div>
       }
+    </div>
+  );
+}
+
+// ── Usage Insight panel ────────────────────────────────────────────────────────
+function UsageInsightPanel({ tools }) {
+  const used = tools.filter(function(t) { return t.sessions > 0; });
+  var insight = null;
+  if (used.length >= 2) {
+    var top = used[0];
+    var second = used[1];
+    if (top.sessions >= second.sessions * 2) {
+      var ratio = Math.round(top.sessions / Math.max(second.sessions, 1));
+      var alt = used.find(function(t) { return t.id !== top.id && t.category === "AI"; });
+      if (!alt) alt = used.find(function(t) { return t.id !== top.id; });
+      insight = "You use " + top.name + " " + ratio + "× more than any other tool this week."
+        + (alt ? " Consider exploring " + alt.name + " for study sessions." : "");
+    }
+  }
+  return (
+    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2 }}>
+        <span style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 11, color: "var(--accent)", marginRight: 2 }}>✦</span>
+        <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink2 }}>Usage Insight</span>
+      </div>
+      <div style={{ padding: "12px 14px" }}>
+        {insight
+          ? <div style={{ fontSize: 12.5, lineHeight: 1.6, color: C.ink2 }}>{insight}</div>
+          : <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: C.ink3, fontSize: 12.5 }}>Use your tools to generate insights.</div>
+        }
+      </div>
     </div>
   );
 }
@@ -4519,6 +4570,7 @@ function ToolsContent() {
           <QuickLaunchPanel />
           <ActivityPanel activity={activityFmt} />
           <UsageBreakdownPanel tools={tools} />
+          <UsageInsightPanel tools={tools} />
         </div>
       </div>
     </>
