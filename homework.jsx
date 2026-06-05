@@ -288,7 +288,7 @@ function HomeworkContent() {
                       </div>
                     </div>
                     {h.urgent && (
-                      <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", padding: "2px 5px", borderRadius: 2, background: "rgba(179,84,59,0.12)", color: "var(--danger)", flexShrink: 0, marginTop: 1 }}>urgent</span>
+                      <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", padding: "2px 5px", borderRadius: 2, background: "rgba(255,255,255,0.08)", color: "var(--danger)", flexShrink: 0, marginTop: 1 }}>urgent</span>
                     )}
                   </div>
                 );
@@ -498,7 +498,7 @@ function HwKanbanCard({ hw, onToggle, onDelete, onDragStart, onDragEnd, isDraggi
         <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
           <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: s.color, flexShrink: 0 }}>{s.short}</span>
           {hw.urgent && !hw.done && (
-            <span style={{ fontSize: 7.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", padding: "1px 4px", borderRadius: 2, background: "rgba(179,84,59,0.12)", color: "var(--danger)", flexShrink: 0 }}>urgent</span>
+            <span style={{ fontSize: 7.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", padding: "1px 4px", borderRadius: 2, background: "rgba(255,255,255,0.08)", color: "var(--danger)", flexShrink: 0 }}>urgent</span>
           )}
           <div style={{ flex: 1 }} />
           <button onClick={e => { e.stopPropagation(); onToggle(); }} style={{
@@ -514,7 +514,7 @@ function HwKanbanCard({ hw, onToggle, onDelete, onDragStart, onDragEnd, isDraggi
           {hw.title}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <span style={{ fontSize: 9.5, fontFamily: "var(--f-mono)", padding: "1px 5px", borderRadius: 3, background: hw.urgent && !hw.done ? "rgba(179,84,59,0.08)" : "var(--bg-2)", color: hw.urgent && !hw.done ? "var(--danger)" : "var(--ink-3)" }}>
+          <span style={{ fontSize: 9.5, fontFamily: "var(--f-mono)", padding: "1px 5px", borderRadius: 3, background: hw.urgent && !hw.done ? "rgba(255,255,255,0.06)" : "var(--bg-2)", color: hw.urgent && !hw.done ? "var(--danger)" : "var(--ink-3)" }}>
             {hw.due}
           </span>
           {hw.est && <span style={{ fontSize: 9, fontFamily: "var(--f-mono)", color: "var(--ink-3)" }}>{hw.est}</span>}
@@ -829,7 +829,7 @@ function HomeworkDetailPage({ hwId }) {
             <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 100, background: "#fef3d8", color: "#9a6a08" }}>⏰ {hw.due}{hw.dueNote ? ` · ${hw.dueNote}` : ""}</span>
             {hw.est && <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>{hw.est}</span>}
             {isDone && <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--done)", border: "1px solid var(--done)", borderRadius: 3, padding: "1px 6px" }}>Done</span>}
-            {hw.urgent && !isDone && <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--accent)", border: "1px solid var(--accent)", borderRadius: 3, padding: "1px 6px" }}>Urgent</span>}
+            {hw.urgent && !isDone && <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink)", border: "1px solid var(--hairline)", borderRadius: 3, padding: "1px 6px" }}>Urgent</span>}
           </div>
           <div style={{ fontFamily: "var(--f-display)", fontSize: 24, lineHeight: 1.2, letterSpacing: "-0.01em", color: isDone ? "var(--ink-3)" : "var(--ink)", textDecoration: isDone ? "line-through" : "none", marginBottom: 10 }}>
             {hw.title}

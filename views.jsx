@@ -75,8 +75,8 @@ function quizReadinessLabel(c) {
 }
 function quizReadinessBg(c) {
   if (c >= 0.7) return "rgba(107,142,90,0.12)";
-  if (c >= 0.5) return "rgba(181,138,59,0.12)";
-  return "rgba(179,84,59,0.12)";
+  if (c >= 0.5) return "rgba(255,255,255,0.07)";
+  return "rgba(255,255,255,0.07)";
 }
 function quizUrgency(when) {
   const w = (when || "").toLowerCase();
@@ -95,12 +95,12 @@ const QUIZ_AI_RECS = {
 };
 
 const QUIZ_STUDY_MODES = [
-  { mode: "flashcard",   icon: Ico.cards, label: "Flashcards",      desc: "Flip · spaced repetition",    accent: "#b58a3b", bg: "rgba(181,138,59,0.07)",  glyph: "↻" },
+  { mode: "flashcard",   icon: Ico.cards, label: "Flashcards",      desc: "Flip · spaced repetition",    accent: "#cccccc", bg: "rgba(255,255,255,0.05)",  glyph: "↻" },
   { mode: "mcq",         icon: Ico.quiz,  label: "Multiple choice", desc: "Auto-generated from any deck", accent: "#5a7a99", bg: "rgba(90,122,153,0.07)",  glyph: "?" },
   { mode: "type",        icon: "Aa",      label: "Type the answer", desc: "Type the definition",          accent: "#7a4e6e", bg: "rgba(122,78,110,0.07)",  glyph: "Aa" },
   { mode: "truefalse",   icon: "T/F",     label: "True / False",    desc: "Is this definition correct?",  accent: "#6b8e5a", bg: "rgba(107,142,90,0.07)",  glyph: "✓" },
   { mode: "keyconcepts", icon: Ico.note,  label: "Key Concepts",    desc: "Study reference sheet",        accent: "#5b5346", bg: "rgba(91,83,70,0.06)",    glyph: "§" },
-  { mode: "written",     icon: Ico.book,  label: "Written recall",  desc: "Free-write what you know",     accent: "#c8694a", bg: "rgba(200,105,74,0.07)",  glyph: "✍" },
+  { mode: "written",     icon: Ico.book,  label: "Written recall",  desc: "Free-write what you know",     accent: "#aaaaaa", bg: "rgba(255,255,255,0.05)",  glyph: "✍" },
 ];
 
 function QuizzesContent({ onTakeQuiz }) {
@@ -380,7 +380,7 @@ function QuizzesContent({ onTakeQuiz }) {
                     <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", lineHeight: 1.5, marginBottom: rec.weakTopic ? 8 : 10 }}>{rec.reason}</div>
                     {/* Weak topic callout */}
                     {rec.weakTopic && (
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "7px 9px", borderRadius: 5, background: "rgba(179,84,59,0.08)", marginBottom: 10 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "7px 9px", borderRadius: 5, background: "rgba(255,255,255,0.06)", marginBottom: 10 }}>
                         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--danger)", flexShrink: 0 }}>Weak</span>
                         <span style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.4 }}>{rec.weakTopic}</span>
                       </div>
@@ -1253,7 +1253,7 @@ function GradesContent() {
         <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 16, color: gi.color, lineHeight: 1, flexShrink: 0 }}>{Math.round(pct * 100)}%</div>
         {hov && (
           <button onClick={(ev) => { ev.stopPropagation(); deleteEntry(sid, e.id); }}
-            style={{ width: 16, height: 16, borderRadius: 2, border: "none", background: "var(--danger)", color: "#fff",
+            style={{ width: 16, height: 16, borderRadius: 2, border: "1px solid var(--hairline)", background: "var(--bg-2)", color: "var(--ink-3)",
               fontSize: 9, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
         )}
       </div>
@@ -3085,9 +3085,9 @@ const C = {
   ink3:      "var(--ink-3)",
   green:     "#6b8e5a",
   greenSoft: "#dce6cf",
-  red:       "#b3543b",
-  amber:     "#b58a3b",
-  accent:    "#a07830",
+  red:       "var(--ink)",
+  amber:     "var(--ink-2)",
+  accent:    "var(--ink-2)",
 };
 
 // ── Date helpers ───────────────────────────────────────────────────────────────

@@ -16,10 +16,10 @@
   --highlight: #fae8a8;       /* margin note yellow */
   --done: #6b8e5a;            /* sage */
   --done-soft: #dce6cf;
-  --danger: #b3543b;
+  --danger: #cccccc;          /* ui-state: white/near-white (not subject) */
   --info: #5a7a99;
   --plum: #7a4e6e;
-  --ochre: #b58a3b;
+  --ochre: #999999;           /* ui-state: secondary gray (not subject) */
   --sidebar-bg: #e8e0d0;
   --sidebar-border: #d4c8b4;
 
@@ -357,7 +357,7 @@ body, html { margin: 0; padding: 0; }
   text-transform: uppercase; letter-spacing: 0.08em; margin-left: 8px;
 }
 .hw-meta { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); white-space: nowrap; }
-.hw-meta.urgent { color: var(--accent); }
+.hw-meta.urgent { color: var(--ink); }
 .hw-handle { color: var(--ink-3); opacity: 0.5; cursor: grab; }
 
 /* Quiz card */

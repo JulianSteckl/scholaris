@@ -300,7 +300,7 @@ function ConfidenceMeter({ value }) {
 
 // ── Alloy theme — applied once on load ────────────────────────────────────────
 (function() {
-  const vars = { "--bg":"#18181a","--bg-2":"#212123","--surface":"#2b2b2d","--ink":"#e6e6ea","--ink-2":"#9898a4","--ink-3":"#585862","--hairline":"#2e2e34","--rule":"#3a3a3e","--accent":"#a4a8b4","--accent-ink":"#c4c8d4","--accent-soft":"#262630","--highlight":"#323238","--done":"#70c07a","--done-soft":"#183020","--danger":"#e07060","--info":"#6090ba","--plum":"#9070ba","--ochre":"#c0a038","--sidebar-bg":"#181818","--sidebar-border":"#2b2b2d" };
+  const vars = { "--bg":"#18181a","--bg-2":"#212123","--surface":"#2b2b2d","--ink":"#e6e6ea","--ink-2":"#9898a4","--ink-3":"#585862","--hairline":"#2e2e34","--rule":"#3a3a3e","--accent":"#a4a8b4","--accent-ink":"#c4c8d4","--accent-soft":"#262630","--highlight":"#323238","--done":"#70c07a","--done-soft":"#183020","--danger":"#e6e6ea","--info":"#6090ba","--plum":"#9070ba","--ochre":"#9898a4","--sidebar-bg":"#181818","--sidebar-border":"#2b2b2d" };
   const el = document.createElement("style");
   el.id = "nb-theme-override";
   el.textContent = ":root{" + Object.entries(vars).map(([k, v]) => k + ":" + v).join(";") + "}";
