@@ -178,22 +178,25 @@ function QuizzesContent({ onTakeQuiz }) {
       {/* ── HERO STATS BAR ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 28 }}>
         {[
-          { label: "Quizzes This Week", val: totalUpcoming,    sub: "upcoming",          isNum: true },
-          { label: "Avg Score",         val: avgScore != null ? avgScore + "%" : "—",    sub: "last 4 results",    isNum: false, accent: avgScore != null ? (avgScore >= 80 ? "var(--done)" : avgScore >= 65 ? "var(--accent)" : "var(--danger)") : null },
-          { label: "Best Subject",      val: bestSubject ? bestSubject.short : "—",       sub: bestSubject ? Math.round(bestAvg * 100) + "% avg" : "no data", isNum: false, dot: bestSubject ? bestSubject.color : null },
-          { label: "Readiness",         val: avgReadiness != null ? avgReadiness + "%" : "—", sub: "across upcoming", isNum: false, accent: avgReadiness != null ? quizReadinessColor(avgReadiness / 100) : null },
+          { label: "Quizzes This Week", numVal: totalUpcoming,  suffix: "",  sub: "upcoming",       isNum: true },
+          { label: "Avg Score",   numVal: avgScore,   suffix: "%", textFallback: "—", sub: "last 4 results",  isNum: true,  accent: avgScore != null ? (avgScore >= 80 ? "var(--done)" : avgScore >= 65 ? "var(--accent)" : "var(--danger)") : null },
+          { label: "Best Subject", numVal: null, textVal: bestSubject ? bestSubject.short : "—", sub: bestSubject ? Math.round(bestAvg * 100) + "% avg" : "no data", isNum: false, dot: bestSubject ? bestSubject.color : null },
+          { label: "Readiness",   numVal: avgReadiness, suffix: "%", textFallback: "—", sub: "across upcoming", isNum: true,  accent: avgReadiness != null ? quizReadinessColor(avgReadiness / 100) : null },
         ].map((m, i) => (
           <div key={i} style={{
             background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius)",
-            padding: "13px 14px", animation: "fade-up .55s cubic-bezier(0.16,1,0.3,1) both", animationDelay: (i * 0.09) + "s",
-            transition: "border-color .14s, box-shadow .14s",
+            padding: "13px 14px", animation: "fade-up 720ms cubic-bezier(0.22,1,0.36,1) both", animationDelay: (200 + i * 120) + "ms",
           }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--rule)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(30,20,8,0.09)"; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--hairline)"; e.currentTarget.style.boxShadow = "none"; }}>
             <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 7 }}>{m.label}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               {m.dot && <div style={{ width: 8, height: 8, borderRadius: 1, background: m.dot, flexShrink: 0 }} />}
-              <div style={{ fontFamily: m.isNum ? "var(--f-display)" : "var(--f-mono)", fontSize: m.isNum ? 26 : 18, fontWeight: 400, lineHeight: 1, color: m.accent || "var(--ink)", letterSpacing: m.isNum ? "-0.02em" : 0 }}>{m.val}</div>
+              <div style={{ fontFamily: m.isNum ? "var(--f-display)" : "var(--f-mono)", fontSize: m.isNum ? 26 : 18, fontWeight: 400, lineHeight: 1, color: m.accent || "var(--ink)", letterSpacing: m.isNum ? "-0.02em" : 0 }}>
+                {m.numVal != null
+                  ? <StatNumber value={m.numVal} suffix={m.suffix} delay={300 + i * 120} duration={1400} />
+                  : (m.textVal || m.textFallback || "—")}
+              </div>
             </div>
             <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 6 }}>{m.sub}</div>
           </div>
@@ -213,7 +216,7 @@ function QuizzesContent({ onTakeQuiz }) {
                 Upcoming · {allUpcoming.length} quiz{allUpcoming.length !== 1 ? "zes" : ""}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))", gap: 14 }}>
-                {allUpcoming.map((q) => {
+                {allUpcoming.map((q, idx) => {
                   const s = subjectBy(q.subject) || SUBJECTS[0];
                   const deckId = deckForSubject(q.subject);
                   const urgency = quizUrgency(q.when || q.dateStr);
@@ -222,8 +225,8 @@ function QuizzesContent({ onTakeQuiz }) {
                   const rLabel = conf != null ? quizReadinessLabel(conf) : null;
                   const rBg    = conf != null ? quizReadinessBg(conf)    : "transparent";
                   return (
-                    <div key={q.id} className="sn-card"
-                      style={{ borderLeft: `3px solid ${s.color}`, cursor: "pointer", display: "flex", flexDirection: "column" }}
+                    <div key={q.id} className="sn-card sn-card-place"
+                      style={{ borderLeft: `3px solid ${s.color}`, cursor: "pointer", display: "flex", flexDirection: "column", animationDelay: (idx * 130) + "ms" }}
                       onClick={() => window.location.hash = "#/quiz-detail/" + q.id}>
 
                       {/* Top: subject + urgency */}
@@ -345,8 +348,8 @@ function QuizzesContent({ onTakeQuiz }) {
 
         </div>{/* end left */}
 
-        {/* ── RIGHT SIDEBAR ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* ── RIGHT SIDEBAR — enters last, after main content settles ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "sn-slide-right 700ms cubic-bezier(0.22,1,0.36,1) both", animationDelay: "600ms" }}>
 
           {/* AI study recommendations */}
           {allUpcoming.length > 0 && (

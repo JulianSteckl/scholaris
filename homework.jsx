@@ -236,23 +236,26 @@ function HomeworkContent() {
       {/* ── METRICS ROW ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 22 }}>
         {[
-          { label: "Open Work",   val: openHW.length,        sub: "assignments",    isNum: true },
-          { label: "Urgent",      val: urgentHW.length,      sub: "need attention", isNum: true,  accent: urgentHW.length > 0 ? "var(--danger)" : null },
-          { label: "Due Today",   val: todayHW.length,       sub: "assignments",    isNum: true,  accent: todayHW.length > 0 ? "var(--accent)" : null },
-          { label: "Est. Time",   val: hwFmtTime(totalMins), sub: "remaining",      isNum: false },
-          { label: "Completion",  val: pct + "%",            sub: `${doneHW.length} of ${allHW.length} done`, isNum: false },
+          { label: "Open Work",  numVal: openHW.length,   suffix: "", sub: "assignments",    isNum: true },
+          { label: "Urgent",     numVal: urgentHW.length, suffix: "", sub: "need attention", isNum: true,  accent: urgentHW.length > 0 ? "var(--danger)" : null },
+          { label: "Due Today",  numVal: todayHW.length,  suffix: "", sub: "assignments",    isNum: true,  accent: todayHW.length > 0 ? "var(--accent)" : null },
+          { label: "Est. Time",  numVal: null, textVal: hwFmtTime(totalMins), sub: "remaining",      isNum: false },
+          { label: "Completion", numVal: pct,  suffix: "%",               sub: `${doneHW.length} of ${allHW.length} done`, isNum: true },
         ].map((m, i) => (
           <div key={i}
             style={{
               background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius)",
               padding: "13px 14px", cursor: "default",
-              animation: "fade-up .55s cubic-bezier(0.16,1,0.3,1) both", animationDelay: (i * 0.08) + "s",
-              transition: "border-color .14s, box-shadow .14s",
+              animation: "fade-up 720ms cubic-bezier(0.22,1,0.36,1) both", animationDelay: (200 + i * 100) + "ms",
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--rule)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(30,20,8,0.09)"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--hairline)"; e.currentTarget.style.boxShadow = "none"; }}>
             <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 7 }}>{m.label}</div>
-            <div style={{ fontFamily: m.isNum ? "var(--f-display)" : "var(--f-mono)", fontSize: m.isNum ? 26 : 18, fontWeight: 400, lineHeight: 1, color: m.accent || "var(--ink)", letterSpacing: m.isNum ? "-0.02em" : "0" }}>{m.val}</div>
+            <div style={{ fontFamily: m.isNum ? "var(--f-display)" : "var(--f-mono)", fontSize: m.isNum ? 26 : 18, fontWeight: 400, lineHeight: 1, color: m.accent || "var(--ink)", letterSpacing: m.isNum ? "-0.02em" : "0" }}>
+              {m.numVal != null
+                ? <StatNumber value={m.numVal} suffix={m.suffix} delay={300 + i * 100} duration={1400} />
+                : (m.textVal || "—")}
+            </div>
             <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 6 }}>{m.sub}</div>
           </div>
         ))}
@@ -263,7 +266,7 @@ function HomeworkContent() {
         <div style={{
           background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)",
           padding: "18px 20px", marginBottom: 22,
-          animation: "fade-up .55s cubic-bezier(0.16,1,0.3,1) both", animationDelay: "0.22s",
+          animation: "fade-up 750ms cubic-bezier(0.22,1,0.36,1) both", animationDelay: "350ms",
         }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -488,7 +491,7 @@ function HwKanbanCard({ hw, onToggle, onDelete, onDragStart, onDragEnd, isDraggi
         borderRadius: "var(--radius)", overflow: "hidden", cursor: "pointer",
         opacity: isDragging ? 0.4 : 1,
         transition: "box-shadow .13s, transform .13s, opacity .13s, border-color .13s",
-        animation: "fade-up .55s cubic-bezier(0.16,1,0.3,1) both",
+        animation: "fade-up 720ms cubic-bezier(0.22,1,0.36,1) both",
       }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 3px 14px rgba(30,20,8,0.11)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = "var(--rule)"; }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; e.currentTarget.style.borderColor = "var(--hairline)"; }}

@@ -616,26 +616,29 @@ body, html { margin: 0; padding: 0; }
 }
 
 /* ═══════════════════════════════════════════════════════
-   MOTION SYSTEM
-   Philosophy: "Motion communicates state, not decoration."
-   Linear · Raycast · Arc · Apple-grade polish
+   MOTION SYSTEM — Paper & Ink Philosophy
+   "Things settle, they don't snap. Every motion has
+    slight physical weight. Like pages turning."
    ═══════════════════════════════════════════════════════ */
 
 :root {
-  /* Expo-out easing — starts fast, decelerates elegantly. Used by Linear, Arc, Apple. */
-  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  /* Paper easing — fast start, long luxurious tail.
+     Nothing stops abruptly. */
+  --ease-paper:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.45, 0, 0.15, 1);
+  --ease-settle: cubic-bezier(0.34, 1.02, 0.64, 1); /* micro settle, no bounce */
 
-  --dur-micro:  220ms;
+  --dur-micro:  240ms;
   --dur-hover:  220ms;
-  --dur-ui:     320ms;
-  --dur-page:   600ms;
+  --dur-ui:     380ms;
+  --dur-page:   800ms;
   --dur-modal:  420ms;
-  --dur-layout: 550ms;
-  --dur-bar:    1100ms;
+  --dur-layout: 720ms;
+  --dur-bar:    1600ms;
 }
 
-/* ── Reduced motion — respect user preference ── */
+/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration:        0.01ms !important;
@@ -645,186 +648,205 @@ body, html { margin: 0; padding: 0; }
   }
 }
 
-/* ── Page entrance — fade up from 16px ── */
+/* ── Page wrapper entrance — 800ms, 16px lift ── */
 @keyframes sn-page-enter {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: none; }
 }
 .sn-page-enter {
-  animation: sn-page-enter var(--dur-page) var(--ease-out) both;
+  animation: sn-page-enter var(--dur-page) var(--ease-paper) both;
 }
 
-/* ── Section stagger — fires on EVERY page, opacity-only so it doesn't
-   compound with child translateY animations ── */
-@keyframes sn-fade-in {
+/* ── Section stagger — opacity only, 200ms between each.
+   Fires on every page automatically via nth-child. ── */
+@keyframes sn-section-appear {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 .sn-page-enter > * {
-  animation: sn-fade-in 500ms var(--ease-out) both;
-  animation-delay: 60ms;
+  animation: sn-section-appear 700ms var(--ease-paper) both;
+  animation-delay: 0ms;
 }
-.sn-page-enter > *:nth-child(2)  { animation-delay: 160ms; }
-.sn-page-enter > *:nth-child(3)  { animation-delay: 260ms; }
-.sn-page-enter > *:nth-child(4)  { animation-delay: 340ms; }
-.sn-page-enter > *:nth-child(5)  { animation-delay: 410ms; }
-.sn-page-enter > *:nth-child(6)  { animation-delay: 470ms; }
-.sn-page-enter > *:nth-child(n+7){ animation-delay: 520ms; }
+.sn-page-enter > *:nth-child(2)  { animation-delay: 200ms; }
+.sn-page-enter > *:nth-child(3)  { animation-delay: 400ms; }
+.sn-page-enter > *:nth-child(4)  { animation-delay: 600ms; }
+.sn-page-enter > *:nth-child(5)  { animation-delay: 800ms; }
+.sn-page-enter > *:nth-child(6)  { animation-delay: 1000ms; }
+.sn-page-enter > *:nth-child(n+7){ animation-delay: 1200ms; }
 
-/* ── Card stagger entrance ── */
+/* ── Card entrance — drift up + paper-settle rotation ── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; transform: translateY(18px) rotate(0.35deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0deg); }
 }
 
-/* ── Modal / overlay ── */
+/* Explicit card-placement class for interactive cards */
+@keyframes sn-card-place {
+  from { opacity: 0; transform: translateY(20px) rotate(0.45deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+.sn-card-place {
+  animation: sn-card-place 720ms var(--ease-paper) both;
+}
+
+/* ── Modal — scale 0.96→1, 400ms open / 250ms close ── */
 @keyframes sn-overlay-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 @keyframes sn-modal-in {
-  from { opacity: 0; transform: scale(0.97) translateY(6px); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes sn-modal-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.97); }
 }
 .sn-overlay-enter {
-  animation: sn-overlay-in var(--dur-modal) var(--ease-out) both;
+  animation: sn-overlay-in var(--dur-modal) var(--ease-paper) both;
 }
 .sn-modal-enter {
-  animation: sn-modal-in var(--dur-modal) var(--ease-out) both;
-  transform-origin: center 40%;
+  animation: sn-modal-in var(--dur-modal) var(--ease-paper) both;
+  transform-origin: center 44%;
 }
 
-/* ── Progress bar fill — clip-path reveal, any width ── */
-@keyframes sn-bar-grow {
-  from { clip-path: inset(0 100% 0 0 round 3px); }
-  to   { clip-path: inset(0 0%   0 0 round 3px); }
+/* ── Progress bar — ink spreading.
+   Fast start, slow near the end. Shimmer pulse at finish. ── */
+@keyframes sn-bar-grow-shimmer {
+  0%    { clip-path: inset(0 100% 0 0 round 3px); filter: brightness(1); }
+  90%   { clip-path: inset(0 0%   0 0 round 3px); filter: brightness(1); }
+  95%   { filter: brightness(1.18); }
+  100%  { clip-path: inset(0 0%   0 0 round 3px); filter: brightness(1); }
 }
 .sn-bar-fill {
-  animation: sn-bar-grow var(--dur-bar) var(--ease-out) both;
-  animation-delay: 300ms;
+  animation: sn-bar-grow-shimmer var(--dur-bar) var(--ease-paper) both;
+  animation-delay: 400ms;
 }
 
-/* ── AI insight / slide-in from left ── */
+/* ── Slide in from right (sidebar / drawer) ── */
+@keyframes sn-slide-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: none; }
+}
+.sn-drawer-enter {
+  animation: sn-slide-right var(--dur-layout) var(--ease-paper) both;
+}
+
+/* ── Slide in from left (AI insights) ── */
 @keyframes sn-slide-left {
   from { opacity: 0; transform: translateX(-16px); }
   to   { opacity: 1; transform: none; }
 }
-.sn-slide-left {
-  animation: sn-slide-left 250ms var(--ease-out) both;
-}
+.sn-slide-left { animation: sn-slide-left 500ms var(--ease-paper) both; }
 
-/* ── Drawer slide in from right ── */
-@keyframes sn-slide-right {
-  from { opacity: 0; transform: translateX(16px); }
-  to   { opacity: 1; transform: none; }
-}
-.sn-drawer-enter {
-  animation: sn-slide-right var(--dur-layout) var(--ease-out) both;
-}
-
-/* ── Scroll reveal — trigger via JS IntersectionObserver ── */
+/* ── Scroll reveal ── */
 @keyframes sn-reveal {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(18px) rotate(0.2deg); }
   to   { opacity: 1; transform: none; }
 }
 .sn-reveal { opacity: 0; }
 .sn-reveal.visible {
-  animation: sn-reveal var(--dur-layout) var(--ease-out) both;
+  animation: sn-reveal var(--dur-layout) var(--ease-paper) both;
 }
 
-/* ── Buttons — hover lift + click press ── */
+/* ── Buttons — lift up slow, settle down fast ── */
 .sn-btn {
   transition:
-    transform      var(--dur-micro) var(--ease-out),
-    background     var(--dur-hover) var(--ease-out),
-    border-color   var(--dur-hover) var(--ease-out),
-    color          var(--dur-hover) var(--ease-out),
-    box-shadow     var(--dur-hover) var(--ease-out);
+    background   var(--dur-hover) var(--ease-paper),
+    border-color var(--dur-hover) var(--ease-paper),
+    color        var(--dur-hover) var(--ease-paper),
+    transform    220ms            var(--ease-paper),
+    box-shadow   220ms            var(--ease-paper);
   will-change: transform;
 }
-.sn-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.sn-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
 .sn-btn:active:not(:disabled) {
   transform: translateY(1px);
-  transition-duration: var(--dur-micro);
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-/* ── Cards — 2px lift + shadow bloom ── */
+/* ── Cards — asymmetric hover: slow lift (220ms), fast settle (150ms) ── */
 .sn-card {
+  /* hover-exit: fast settle */
   transition:
-    transform    var(--dur-hover) var(--ease-out),
-    box-shadow   var(--dur-hover) var(--ease-out),
-    border-color var(--dur-hover) var(--ease-out);
+    transform    160ms ease,
+    box-shadow   160ms ease,
+    border-color 200ms ease;
   will-change: transform;
 }
 .sn-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: var(--rule);
   box-shadow:
     0 0 0 0.5px rgba(40,28,12,0.06),
     0 1px 0  rgba(255,255,255,0.72) inset,
-    0 6px 20px rgba(30,20,8,0.12),
-    0 12px 36px rgba(30,20,8,0.07),
+    0 8px 24px rgba(30,20,8,0.14),
+    0 16px 40px rgba(30,20,8,0.08),
     0 2px 0 0 var(--rule);
+  /* hover-enter: slow lift */
+  transition:
+    transform    220ms var(--ease-paper),
+    box-shadow   220ms var(--ease-paper),
+    border-color 220ms ease;
 }
 
-/* Subject cards */
+/* Subject cards — same asymmetric pattern */
 .subj-card {
-  transition:
-    transform    var(--dur-hover) var(--ease-out),
-    box-shadow   var(--dur-hover) var(--ease-out),
-    border-color var(--dur-hover) var(--ease-out);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 200ms ease;
   will-change: transform;
 }
 .subj-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: var(--rule);
-  box-shadow: 0 6px 24px rgba(30,20,8,0.11);
+  box-shadow: 0 8px 28px rgba(30,20,8,0.13);
+  transition: transform 220ms var(--ease-paper), box-shadow 220ms var(--ease-paper), border-color 220ms ease;
 }
 
-/* ── Sidebar nav — smooth state + subtle hover lift ── */
+/* ── Sidebar nav — smooth color transitions ── */
 .sn-nav-item {
   transition:
-    background   var(--dur-hover) var(--ease-out),
-    color        var(--dur-hover) var(--ease-out),
-    border-color var(--dur-hover) var(--ease-out),
-    transform    var(--dur-hover) var(--ease-out);
+    background   220ms var(--ease-paper),
+    color        220ms var(--ease-paper),
+    border-color 220ms var(--ease-paper),
+    transform    220ms var(--ease-paper);
 }
 .sn-sidebar .sn-nav-item:not(.active):hover { transform: translateY(-1px); }
 
-/* ── Search bar — Raycast-style focus expansion ── */
+/* ── Search bar — expand on focus ── */
 .sn-search {
   transition:
-    max-width    var(--dur-ui)    var(--ease-out),
-    border-color var(--dur-ui)    var(--ease-out),
-    background   var(--dur-ui)    var(--ease-out),
-    box-shadow   var(--dur-ui)    var(--ease-out);
+    max-width    var(--dur-ui) var(--ease-paper),
+    border-color var(--dur-ui) var(--ease-paper),
+    box-shadow   var(--dur-ui) var(--ease-paper);
 }
 .sn-search:focus-within {
   max-width: 400px;
   border-color: var(--ink);
-  box-shadow: 0 0 0 3px rgba(160, 120, 48, 0.09);
+  box-shadow: 0 0 0 3px rgba(160, 120, 48, 0.08);
 }
 
-/* ── Schedule — today card ambient pulse ── */
+/* ── Schedule today — ambient glow pulse ── */
 @keyframes sn-today-glow {
-  0%,  100% { box-shadow: 0 0 0 0   rgba(160,120,48,0), inset 0 0 0 0 rgba(255,255,255,0); }
-  50%        { box-shadow: 0 0 0 5px rgba(160,120,48,0.10), inset 0 1px 0 rgba(255,255,255,0.1); }
+  0%,  100% { box-shadow: 0 0 0 0   rgba(160,120,48,0); }
+  50%        { box-shadow: 0 0 0 6px rgba(160,120,48,0.12); }
 }
 .sched-day.today {
-  animation: sn-today-glow 3.5s var(--ease-in-out) infinite;
-  animation-delay: 0.8s;
+  animation: sn-today-glow 4s var(--ease-in-out) infinite;
+  animation-delay: 1.2s;
 }
 
-/* ── Homework row ── */
+/* ── Homework row completion ── */
 .hw-row {
   transition:
-    background var(--dur-hover)  var(--ease-out),
-    opacity    250ms             var(--ease-out),
-    transform  250ms             var(--ease-out);
+    background 220ms var(--ease-paper),
+    opacity    350ms var(--ease-paper),
+    transform  350ms var(--ease-paper);
 }
-.hw-row.done { opacity: 0.52; }
-.hw-title { transition: color 250ms var(--ease-out); }
+.hw-row.done { opacity: 0.50; }
+.hw-title { transition: color 350ms var(--ease-paper); }
 
 /* ── Quick action icon nudge ── */
-.sn-quick-icon { transition: transform var(--dur-micro) var(--ease-out); }
+.sn-quick-icon { transition: transform var(--dur-micro) var(--ease-paper); }
 .sn-quick-action:hover .sn-quick-icon { transform: translateX(2px); }
