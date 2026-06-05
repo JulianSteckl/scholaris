@@ -148,62 +148,67 @@ function Onboarding({ onComplete }) {
   // Roman numeral helper for preview card
   const toRoman = (n) => ["I","II","III","IV","V","VI","VII","VIII","IX","X"][n-1] || n;
 
+  // Transition state for back-to-cover animation
+  const [exitingTocover, setExitingToCover] = React.useState(false);
+  const goToCover = React.useCallback(() => {
+    setExitingToCover(true);
+    setTimeout(() => { setExitingToCover(false); setStep(0); }, 420);
+  }, []);
+
   // Notebook preview card — reflects current input state
   const PreviewCard = () => (
     <div style={{
-      width: 320, background: "#252527", border: "1px solid rgba(255,255,255,0.13)",
-      borderRadius: 8, padding: "36px 32px 30px", boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
-      display: "flex", flexDirection: "column",
+      width: 300, minHeight: 380, background: "#1e1e22",
+      border: "1px solid #3a3a3e", borderRadius: 4,
+      padding: "28px 26px 24px", boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
+      display: "flex", flexDirection: "column", boxSizing: "border-box",
     }}>
-      <div className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--ink-3)", marginBottom: 18 }}>ACADEMIC NOTEBOOK</div>
-      <div style={{ fontFamily: "var(--f-display)", fontSize: 44, lineHeight: 1.08, color: "var(--ink)", fontWeight: 400, fontStyle: "italic", marginBottom: 24 }}>
+      <div className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "#585862", marginBottom: 16 }}>ACADEMIC NOTEBOOK</div>
+      <div style={{ fontFamily: "var(--f-display)", fontSize: 28, lineHeight: 1.2, color: "#ffffff", fontWeight: 400, fontStyle: "italic", marginBottom: 20 }}>
         {name.trim() ? name.trim() + "'s" : "Julian's"}<br />Notebook
       </div>
-      <div style={{ height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 24 }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ height: 1, background: "#2e2e34", marginBottom: 20 }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
         {[
           ["READER",   name.trim() || "Julian"],
           ["YEAR",     grade ? grade.charAt(0).toUpperCase() + grade.slice(1) : "—"],
           ["SCHOOL",   step > 1 && school.trim() ? school.trim() : (step > 1 ? "—" : "next step")],
           ["SUBJECTS", step > 2 ? (validSubjects.length + " added") : "step " + toRoman(3)],
         ].map(([k, v]) => (
-          <div key={k} style={{ display: "flex", gap: 16, alignItems: "baseline" }}>
-            <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "var(--ink-3)", width: 72, flexShrink: 0 }}>{k}</span>
-            <span style={{ fontSize: 15, color: "var(--ink-2)", fontFamily: "var(--f-display)", fontStyle: "italic" }}>{v}</span>
+          <div key={k} style={{ display: "flex", gap: 14, alignItems: "baseline" }}>
+            <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#585862", width: 66, flexShrink: 0 }}>{k}</span>
+            <span style={{ fontSize: 13, color: "#c4c8d4", fontFamily: "var(--f-display)", fontStyle: "italic" }}>{v}</span>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
-        <div style={{ display: "flex", gap: 6 }}>
-          {[1,2,3].map(s => (
-            <div key={s} style={{
-              width: s === step ? 28 : 7, height: 2, borderRadius: 1,
-              background: s === step ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)",
-              transition: "width 0.3s, background 0.3s",
-            }} />
-          ))}
-        </div>
-      </div>
-      <div className="mono" style={{ textAlign: "center", fontSize: 9, letterSpacing: "0.12em", color: "var(--ink-3)", marginTop: 12 }}>
-        STEP {step} OF 3
+      <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 8 }}>
+        {[1,2,3].map(s => (
+          <div key={s} style={{
+            width: s === step ? 24 : 6, height: 3, borderRadius: 2,
+            background: s === step ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.18)",
+            transition: "width 0.3s cubic-bezier(0.22,1,0.36,1), background 0.3s",
+          }} />
+        ))}
       </div>
     </div>
   );
 
   // Shared nav row used in steps 1-3
   const NavRow = ({ canProceed, onBack, onNext, nextLabel = "Next →" }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 36, gap: 12 }}>
+    <div style={{ display: "flex", gap: 10, marginTop: 32 }}>
       <button onClick={onBack} style={{
-        height: 48, padding: "0 24px", borderRadius: 6, cursor: "pointer",
-        border: "1px solid rgba(255,255,255,0.22)", background: "transparent",
-        color: "rgba(255,255,255,0.65)", fontFamily: "inherit", fontSize: 15,
-        transition: "border-color 0.15s, color 0.15s",
+        height: 48, padding: "0 22px", borderRadius: 4, cursor: "pointer",
+        border: "1px solid #3a3a3e", background: "#2b2b2d",
+        color: "#9898a4", fontFamily: "inherit", fontSize: 14,
+        flexShrink: 0, transition: "color 0.15s",
       }}>← Back</button>
       <button onClick={onNext} disabled={!canProceed} style={{
-        height: 48, padding: "0 28px", borderRadius: 6, cursor: canProceed ? "pointer" : "default",
-        border: "none", background: canProceed ? "#f0ece4" : "rgba(255,255,255,0.12)",
-        color: canProceed ? "#141310" : "rgba(255,255,255,0.3)",
-        fontFamily: "inherit", fontSize: 15, fontWeight: 600,
+        height: 48, flex: 1, borderRadius: 4,
+        cursor: canProceed ? "pointer" : "default",
+        border: "none",
+        background: canProceed ? "#f0ece4" : "#2b2b2d",
+        color: canProceed ? "#141310" : "#585862",
+        fontFamily: "inherit", fontSize: 14, fontWeight: 600,
         transition: "background 0.15s, color 0.15s",
       }}>{nextLabel}</button>
     </div>
@@ -406,223 +411,232 @@ function Onboarding({ onComplete }) {
   }
 
   // ── Steps 1–3: editorial 3-column layout ──
-  const darkInput = {
+  const F = { // shared form input style
     width: "100%", height: 48, padding: "0 16px", boxSizing: "border-box",
-    border: "1px solid #3a3a3e", borderRadius: 6,
-    fontFamily: "inherit", fontSize: 15, color: "var(--ink)",
-    background: "rgba(255,255,255,0.05)", outline: "none",
+    border: "1px solid #3a3a3e", borderRadius: 4,
+    fontFamily: "inherit", fontSize: 15, color: "#ffffff",
+    background: "#2b2b2d", outline: "none",
   };
 
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 500,
-      background: "#141412",
+      background: "#141416",
       display: "flex", flexDirection: "column",
       fontFamily: "var(--f-ui, Geist, sans-serif)",
       fontSize: 16,
+      // exit animation: scale + fade when going back to cover
+      opacity: exitingTocover ? 0 : 1,
+      transform: exitingTocover ? "scale(0.97)" : "scale(1)",
+      transition: exitingTocover ? "opacity 0.4s cubic-bezier(0.22,1,0.36,1), transform 0.4s cubic-bezier(0.22,1,0.36,1)" : "none",
     }}>
       {/* Top bar */}
       <div className="mono" style={{
-        textAlign: "center", padding: "18px 0",
+        textAlign: "center", padding: "18px 0", flexShrink: 0,
         fontSize: 11, letterSpacing: "0.26em", color: "#9898a4",
-        borderBottom: "1px solid #3a3a3e",
-        background: "#2b2b2d", flexShrink: 0,
+        borderBottom: "1px solid #2e2e34", background: "#2b2b2d",
       }}>
         — SETTING UP YOUR NOTEBOOK —
       </div>
 
-      {/* Main 3-column area — fills all space between topbar and footer */}
-      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+      {/* Main 3-column area */}
+      <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}>
 
         {/* Left: Contents */}
         <div style={{
-          width: 200, flexShrink: 0,
-          borderRight: "1px solid rgba(255,255,255,0.08)",
-          padding: "48px 28px 32px",
+          width: 180, flexShrink: 0,
+          borderRight: "1px solid #2e2e34",
+          padding: "44px 24px 28px",
           display: "flex", flexDirection: "column",
-          background: "#1e1e20",
+          background: "#1a1a1c",
         }}>
-          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--ink-3)", marginBottom: 32 }}>CONTENTS</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 28, flex: 1 }}>
+          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.22em", color: "#585862", marginBottom: 32 }}>CONTENTS</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, flex: 1 }}>
             {[
               { s: 1, title: "About you",    sub: "Name & year" },
               { s: 2, title: "Your school",  sub: "School & start date" },
               { s: 3, title: "Your classes", sub: "Add subjects" },
             ].map(({ s, title, sub }) => (
-              <div key={s} style={{ display: "flex", gap: 13, alignItems: "flex-start" }}>
+              <div key={s} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <div style={{
-                  width: 8, height: 8, borderRadius: "50%", marginTop: 4, flexShrink: 0,
-                  background: s === step ? "var(--ink)" : s < step ? "rgba(255,255,255,0.3)" : "transparent",
-                  border: s === step ? "none" : "1px solid rgba(255,255,255,0.25)",
+                  width: 6, height: 6, borderRadius: "50%", marginTop: 5, flexShrink: 0,
+                  background: s === step ? "#ffffff" : "transparent",
+                  border: s === step ? "none" : "1px solid " + (s < step ? "#9898a4" : "#585862"),
                 }} />
                 <div>
                   <div style={{
                     fontSize: s === step ? 15 : 13,
-                    color: s === step ? "var(--ink)" : "var(--ink-2)",
-                    fontWeight: s === step ? 600 : 400,
+                    color: s === step ? "#ffffff" : "#9898a4",
+                    fontWeight: s === step ? 500 : 400,
                     lineHeight: 1.3,
                   }}>{title}</div>
-                  {s === step && <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 3 }}>{sub}</div>}
+                  <div style={{ fontSize: 11, color: "#585862", marginTop: 3 }}>{sub}</div>
                 </div>
               </div>
             ))}
           </div>
-          <button onClick={() => setStep(0)} style={{
+          <button onClick={goToCover} style={{
             background: "none", border: "none", padding: 0, cursor: "pointer",
-            fontSize: 13, color: "var(--ink-3)", fontFamily: "inherit", textAlign: "left",
+            fontSize: 13, color: "#9898a4", fontFamily: "inherit", textAlign: "left",
           }}>← back to cover</button>
         </div>
 
-        {/* Center: Preview — darkest panel, desk surface feel */}
+        {/* Center: Preview */}
         <div style={{
           flex: 1, minWidth: 0,
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          gap: 20, padding: "0 32px",
-          borderRight: "1px solid rgba(255,255,255,0.08)",
-          background: "#161618",
+          borderRight: "1px solid #2e2e34",
+          background: "#141416",
         }}>
-          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--ink-3)" }}>PREVIEW</div>
+          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.22em", color: "#585862", marginBottom: 24 }}>PREVIEW</div>
           <PreviewCard />
         </div>
 
         {/* Right: Form */}
         <div style={{
           width: 380, flexShrink: 0,
-          padding: "48px 44px",
+          padding: "0 44px",
           display: "flex", flexDirection: "column", justifyContent: "center",
           background: "#212123",
+          borderLeft: "1px solid #2e2e34",
           overflowY: "auto",
         }}>
-          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.18em", color: "var(--ink-3)", marginBottom: 20 }}>
-            STEP {step} OF 3 — {stepLabels[step - 1].toUpperCase()}
-          </div>
-
-          {/* ── Step 1 ── */}
-          {step === 1 && (
-            <div>
-              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 36, lineHeight: 1.1, margin: "0 0 32px", fontWeight: 400, color: "var(--ink)" }}>
-                Let's set up your <em>notebook.</em>
-              </h2>
-
-              <OField label="What's your name?" dark>
-                <input
-                  autoFocus
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && canNext1) setStep(2); }}
-                  placeholder="e.g. Julian"
-                  style={darkInput}
-                />
-              </OField>
-
-              <OField label="What year are you in?" style={{ marginTop: 28 }} dark>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {[["freshman","Freshman"],["sophomore","Sophomore"],["junior","Junior"],["senior","Senior"]].map(([k,l]) => (
-                    <button key={k} onClick={() => setGrade(k)} style={{
-                      flex: 1, height: 44, borderRadius: 6, fontSize: 13,
-                      border: "1px solid " + (grade === k ? "rgba(255,255,255,0.7)" : "#3a3a3e"),
-                      background: grade === k ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.03)",
-                      color: grade === k ? "var(--ink)" : "var(--ink-2)",
-                      fontFamily: "inherit", cursor: "pointer", fontWeight: grade === k ? 600 : 400,
-                      transition: "all 0.15s",
-                    }}>{l}</button>
-                  ))}
-                </div>
-              </OField>
-
-              <NavRow canProceed={canNext1} onBack={() => setStep(0)} onNext={() => setStep(2)} />
+          <div>
+            <div className="mono" style={{ fontSize: 11, letterSpacing: "0.2em", color: "#585862", marginBottom: 24 }}>
+              STEP {step} OF 3 — {stepLabels[step - 1].toUpperCase()}
             </div>
-          )}
 
-          {/* ── Step 2 ── */}
-          {step === 2 && (
-            <div>
-              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 36, lineHeight: 1.1, margin: "0 0 32px", fontWeight: 400, color: "var(--ink)" }}>
-                Tell us about your <em>school.</em>
-              </h2>
+            {/* ── Step 1 ── */}
+            {step === 1 && (
+              <>
+                <h2 style={{ fontFamily: "var(--f-display)", fontSize: 32, lineHeight: 1.15, margin: "0 0 32px", fontWeight: 400, color: "#ffffff" }}>
+                  Let's set up your <em>notebook.</em>
+                </h2>
 
-              <OField label="School name" dark>
-                <input
-                  autoFocus
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  placeholder="e.g. Lincoln High School"
-                  style={darkInput}
-                />
-              </OField>
-
-              <OField label="When does your school year start?" style={{ marginTop: 28 }} dark>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <select value={yearMonth} onChange={(e) => setYearMonth(Number(e.target.value))} style={{ ...darkInput, flex: 2, height: 48, padding: "0 12px" }}>
-                    {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                  </select>
-                  <select value={yearYear} onChange={(e) => setYearYear(Number(e.target.value))} style={{ ...darkInput, flex: 1, height: 48, padding: "0 12px" }}>
-                    {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-                  </select>
+                <div style={{ marginBottom: 24 }}>
+                  <div className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", color: "#585862", marginBottom: 8 }}>WHAT'S YOUR NAME?</div>
+                  <input
+                    autoFocus
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && canNext1) setStep(2); }}
+                    placeholder="e.g. Julian"
+                    style={{ ...F, "::placeholder": { color: "#585862" } }}
+                  />
                 </div>
-              </OField>
 
-              <NavRow canProceed={canNext2} onBack={() => setStep(1)} onNext={() => setStep(3)} />
-            </div>
-          )}
+                <div>
+                  <div className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", color: "#585862", marginBottom: 8 }}>WHAT YEAR ARE YOU IN?</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[["freshman","Freshman"],["sophomore","Sophomore"],["junior","Junior"],["senior","Senior"]].map(([k,l]) => (
+                      <button key={k} onClick={() => setGrade(k)} style={{
+                        flex: 1, height: 42, borderRadius: 4, fontSize: 13,
+                        border: "1px solid #3a3a3e",
+                        background: grade === k ? "#ffffff" : "#2b2b2d",
+                        color: grade === k ? "#141416" : "#ffffff",
+                        fontFamily: "inherit", cursor: "pointer", fontWeight: grade === k ? 600 : 400,
+                        transition: "background 0.15s, color 0.15s",
+                      }}>{l}</button>
+                    ))}
+                  </div>
+                </div>
 
-          {/* ── Step 3 ── */}
-          {step === 3 && (
-            <div>
-              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 36, lineHeight: 1.1, margin: "0 0 6px", fontWeight: 400, color: "var(--ink)" }}>
-                What classes are you <em>taking?</em>
-              </h2>
-              <p style={{ fontSize: 14, color: "var(--ink-3)", margin: "0 0 24px", lineHeight: 1.5 }}>
-                Add up to 10. You can change these later.
-              </p>
+                <NavRow canProceed={canNext1} onBack={goToCover} onNext={() => setStep(2)} />
+              </>
+            )}
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 260, overflowY: "auto", paddingRight: 4 }}>
-                {subjects.map((s, i) => (
-                  <div key={s.tempId} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ position: "relative", flexShrink: 0 }}>
-                      <div onClick={() => setColorPicker(colorPicker === s.tempId ? null : s.tempId)}
-                        style={{ width: 32, height: 32, borderRadius: 7, background: s.color, cursor: "pointer", border: "2px solid rgba(0,0,0,0.25)" }} />
-                      {colorPicker === s.tempId && (
-                        <div style={{
-                          position: "absolute", top: 38, left: 0, zIndex: 10,
-                          background: "#252527", border: "1px solid #3a3a3e",
-                          borderRadius: 7, padding: 10,
-                          display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 5,
-                          boxShadow: "0 8px 24px -4px rgba(0,0,0,0.8)",
-                        }}>
-                          {PRESET_COLORS.map((c) => (
-                            <div key={c} onClick={() => { updateSubject(s.tempId, { color: c }); setColorPicker(null); }}
-                              style={{ width: 24, height: 24, borderRadius: 5, background: c, cursor: "pointer",
-                                outline: s.color === c ? "2px solid var(--ink)" : "none", outlineOffset: 1 }} />
-                          ))}
-                        </div>
+            {/* ── Step 2 ── */}
+            {step === 2 && (
+              <>
+                <h2 style={{ fontFamily: "var(--f-display)", fontSize: 32, lineHeight: 1.15, margin: "0 0 32px", fontWeight: 400, color: "#ffffff" }}>
+                  Tell us about your <em>school.</em>
+                </h2>
+
+                <div style={{ marginBottom: 24 }}>
+                  <div className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", color: "#585862", marginBottom: 8 }}>SCHOOL NAME</div>
+                  <input
+                    autoFocus
+                    value={school}
+                    onChange={(e) => setSchool(e.target.value)}
+                    placeholder="e.g. Lincoln High School"
+                    style={F}
+                  />
+                </div>
+
+                <div>
+                  <div className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", color: "#585862", marginBottom: 8 }}>WHEN DOES YOUR SCHOOL YEAR START?</div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <select value={yearMonth} onChange={(e) => setYearMonth(Number(e.target.value))} style={{ ...F, flex: 2 }}>
+                      {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                    </select>
+                    <select value={yearYear} onChange={(e) => setYearYear(Number(e.target.value))} style={{ ...F, flex: 1 }}>
+                      {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <NavRow canProceed={canNext2} onBack={() => setStep(1)} onNext={() => setStep(3)} />
+              </>
+            )}
+
+            {/* ── Step 3 ── */}
+            {step === 3 && (
+              <>
+                <h2 style={{ fontFamily: "var(--f-display)", fontSize: 32, lineHeight: 1.15, margin: "0 0 6px", fontWeight: 400, color: "#ffffff" }}>
+                  What classes are you <em>taking?</em>
+                </h2>
+                <p style={{ fontSize: 13, color: "#585862", margin: "0 0 24px", lineHeight: 1.5 }}>
+                  Add up to 10. You can change these later.
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 250, overflowY: "auto", paddingRight: 4 }}>
+                  {subjects.map((s, i) => (
+                    <div key={s.tempId} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        <div onClick={() => setColorPicker(colorPicker === s.tempId ? null : s.tempId)}
+                          style={{ width: 32, height: 32, borderRadius: 6, background: s.color, cursor: "pointer", border: "2px solid rgba(0,0,0,0.3)" }} />
+                        {colorPicker === s.tempId && (
+                          <div style={{
+                            position: "absolute", top: 38, left: 0, zIndex: 10,
+                            background: "#1e1e22", border: "1px solid #3a3a3e",
+                            borderRadius: 6, padding: 10,
+                            display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 5,
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.8)",
+                          }}>
+                            {PRESET_COLORS.map((c) => (
+                              <div key={c} onClick={() => { updateSubject(s.tempId, { color: c }); setColorPicker(null); }}
+                                style={{ width: 24, height: 24, borderRadius: 4, background: c, cursor: "pointer",
+                                  outline: s.color === c ? "2px solid #ffffff" : "none", outlineOffset: 1 }} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        value={s.name}
+                        onChange={(e) => updateSubject(s.tempId, { name: e.target.value })}
+                        placeholder={`Class ${i + 1} (e.g. AP Biology)`}
+                        style={{ ...F, flex: 1, height: 40 }}
+                      />
+                      {subjects.length > 1 && (
+                        <button onClick={() => removeSubject(s.tempId)}
+                          style={{ border: 0, background: "transparent", color: "#585862", cursor: "pointer", fontSize: 18, padding: "0 4px" }}>×</button>
                       )}
                     </div>
-                    <input
-                      value={s.name}
-                      onChange={(e) => updateSubject(s.tempId, { name: e.target.value })}
-                      placeholder={`Class ${i + 1} (e.g. AP Biology)`}
-                      style={{ ...darkInput, flex: 1, height: 40, padding: "0 14px" }}
-                    />
-                    {subjects.length > 1 && (
-                      <button onClick={() => removeSubject(s.tempId)}
-                        style={{ border: 0, background: "transparent", color: "var(--ink-3)", cursor: "pointer", fontSize: 18, padding: "0 4px", lineHeight: 1 }}>×</button>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              {subjects.length < 10 && (
-                <button onClick={addSubject} style={{
-                  marginTop: 12, padding: "8px 16px", borderRadius: 6, fontSize: 13,
-                  border: "1px solid #3a3a3e", background: "transparent",
-                  color: "var(--ink-2)", fontFamily: "inherit", cursor: "pointer",
-                }}>+ Add another class</button>
-              )}
+                {subjects.length < 10 && (
+                  <button onClick={addSubject} style={{
+                    marginTop: 10, padding: "8px 14px", borderRadius: 4, fontSize: 13,
+                    border: "1px solid #3a3a3e", background: "transparent",
+                    color: "#9898a4", fontFamily: "inherit", cursor: "pointer",
+                  }}>+ Add another class</button>
+                )}
 
-              <NavRow canProceed={canFinish} onBack={() => setStep(2)} onNext={finish} nextLabel="Open my notebook →" />
-            </div>
-          )}
+                <NavRow canProceed={canFinish} onBack={() => setStep(2)} onNext={finish} nextLabel="Open my notebook →" />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -630,8 +644,7 @@ function Onboarding({ onComplete }) {
       <div className="mono" style={{
         textAlign: "center", padding: "16px 0", flexShrink: 0,
         fontSize: 10, letterSpacing: "0.22em", color: "#585862",
-        borderTop: "1px solid #3a3a3e",
-        background: "#2b2b2d",
+        borderTop: "1px solid #2e2e34", background: "#2b2b2d",
       }}>
         ANNO MMXXVI · PRINTED FOR ONE READER
       </div>
