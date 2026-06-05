@@ -324,7 +324,7 @@ function Onboarding({ onComplete }) {
             {/* Rule */}
             <div style={{ marginTop: 32, display: "flex", alignItems: "center", gap: 22, fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-3)", animation: "nb-fade-up 0.6s 1.35s both" }}>
               <span style={{ width: 64, height: 1, background: "var(--rule)" }} />
-              printed for one reader
+              Anno MMXXVI
               <span style={{ width: 64, height: 1, background: "var(--rule)" }} />
             </div>
 
@@ -451,6 +451,7 @@ function Onboarding({ onComplete }) {
         <div style={{
           flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           gap: 16, borderRight: "1px solid rgba(255,255,255,0.07)", padding: "0 24px",
+          minHeight: 0, alignSelf: "stretch",
         }}>
           <div className="mono" style={{ fontSize: 9, letterSpacing: "0.18em", color: "rgba(255,255,255,0.2)" }}>PREVIEW</div>
           <PreviewCard />
