@@ -483,10 +483,10 @@ function Onboarding({ onComplete }) {
 
         {/* Center: Preview */}
         <div style={{
-          flex: 1, minWidth: 0,
+          flex: 1, minWidth: 0, alignSelf: "stretch",
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           borderRight: "1px solid #2e2e34",
-          background: "#141416",
+          background: "#0e0e10",
         }}>
           <div className="mono" style={{ fontSize: 11, letterSpacing: "0.22em", color: "#585862", marginBottom: 24 }}>PREVIEW</div>
           <PreviewCard />
