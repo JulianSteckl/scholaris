@@ -625,13 +625,13 @@ body, html { margin: 0; padding: 0; }
   --ease-out:    cubic-bezier(0, 0, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --dur-micro:  150ms;
-  --dur-hover:  150ms;
-  --dur-ui:     200ms;
-  --dur-page:   250ms;
-  --dur-modal:  250ms;
-  --dur-layout: 320ms;
-  --dur-bar:    820ms;
+  --dur-micro:  180ms;
+  --dur-hover:  180ms;
+  --dur-ui:     240ms;
+  --dur-page:   380ms;
+  --dur-modal:  300ms;
+  --dur-layout: 420ms;
+  --dur-bar:    900ms;
 }
 
 /* ── Reduced motion — respect user preference ── */
@@ -644,18 +644,35 @@ body, html { margin: 0; padding: 0; }
   }
 }
 
-/* ── Page entrance — fade up from 8px ── */
+/* ── Page entrance — fade up from 10px ── */
 @keyframes sn-page-enter {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: none; }
 }
 .sn-page-enter {
   animation: sn-page-enter var(--dur-page) var(--ease-out) both;
 }
 
+/* ── Section stagger — fires on EVERY page, opacity-only so it doesn't
+   compound with child translateY animations ── */
+@keyframes sn-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.sn-page-enter > * {
+  animation: sn-fade-in 320ms var(--ease-out) both;
+  animation-delay: 30ms;  /* base: start after wrapper begins */
+}
+.sn-page-enter > *:nth-child(2) { animation-delay:  90ms; }
+.sn-page-enter > *:nth-child(3) { animation-delay: 150ms; }
+.sn-page-enter > *:nth-child(4) { animation-delay: 210ms; }
+.sn-page-enter > *:nth-child(5) { animation-delay: 260ms; }
+.sn-page-enter > *:nth-child(6) { animation-delay: 300ms; }
+.sn-page-enter > *:nth-child(n+7) { animation-delay: 330ms; }
+
 /* ── Card stagger entrance ── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: none; }
 }
 

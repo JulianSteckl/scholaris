@@ -246,7 +246,7 @@ function HomeworkContent() {
             style={{
               background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius)",
               padding: "13px 14px", cursor: "default",
-              animation: "fade-up .18s ease both", animationDelay: (i * 0.045) + "s",
+              animation: "fade-up .32s ease both", animationDelay: (i * 0.06) + "s",
               transition: "border-color .14s, box-shadow .14s",
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--rule)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(30,20,8,0.09)"; }}
@@ -263,7 +263,7 @@ function HomeworkContent() {
         <div style={{
           background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)",
           padding: "18px 20px", marginBottom: 22,
-          animation: "fade-up .22s ease both", animationDelay: "0.12s",
+          animation: "fade-up .32s ease both", animationDelay: "0.18s",
         }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -488,7 +488,7 @@ function HwKanbanCard({ hw, onToggle, onDelete, onDragStart, onDragEnd, isDraggi
         borderRadius: "var(--radius)", overflow: "hidden", cursor: "pointer",
         opacity: isDragging ? 0.4 : 1,
         transition: "box-shadow .13s, transform .13s, opacity .13s, border-color .13s",
-        animation: "fade-up .18s ease both",
+        animation: "fade-up .32s ease both",
       }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 3px 14px rgba(30,20,8,0.11)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = "var(--rule)"; }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; e.currentTarget.style.borderColor = "var(--hairline)"; }}

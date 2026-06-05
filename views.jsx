@@ -185,7 +185,7 @@ function QuizzesContent({ onTakeQuiz }) {
         ].map((m, i) => (
           <div key={i} style={{
             background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius)",
-            padding: "13px 14px", animation: "fade-up .18s ease both", animationDelay: (i * 0.045) + "s",
+            padding: "13px 14px", animation: "fade-up .32s ease both", animationDelay: (i * 0.07) + "s",
             transition: "border-color .14s, box-shadow .14s",
           }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--rule)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(30,20,8,0.09)"; }}
