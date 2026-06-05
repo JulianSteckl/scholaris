@@ -308,32 +308,8 @@ function ConfidenceMeter({ value }) {
   window.dispatchEvent(new CustomEvent("nbThemeApplied", { detail: { accent: vars["--accent"] } }));
 })();
 
-// ── Animated count-up number ──────────────────────────────────────────────────
-function useCountUp(target, duration, delay) {
-  const [val, setVal] = React.useState(0);
-  React.useEffect(() => {
-    if (typeof target !== "number" || target === 0) { setVal(target || 0); return; }
-    let raf;
-    const tid = setTimeout(() => {
-      const t0 = performance.now();
-      const tick = (now) => {
-        const progress = Math.min((now - t0) / duration, 1);
-        // Quartic ease-out — slows dramatically near the final value
-        const eased = 1 - Math.pow(1 - progress, 4);
-        setVal(Math.round(target * eased));
-        if (progress < 1) raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-    }, delay);
-    return () => { clearTimeout(tid); cancelAnimationFrame(raf); };
-  }, [target]);
-  return val;
+function StatNumber({ value, suffix = "", prefix = "" }) {
+  return <>{prefix}{value != null ? value : "—"}{suffix}</>;
 }
 
-function StatNumber({ value, duration = 1400, delay = 300, suffix = "", prefix = "" }) {
-  const count = useCountUp(typeof value === "number" ? value : 0, duration, delay);
-  if (typeof value !== "number") return <>{prefix}{value}{suffix}</>;
-  return <>{prefix}{count}{suffix}</>;
-}
-
-Object.assign(window, { Ico, Sidebar, Topbar, PageHeader, SubjectDot, ConfidenceMeter, SubjectGlyph, StatNumber, useCountUp });
+Object.assign(window, { Ico, Sidebar, Topbar, PageHeader, SubjectDot, ConfidenceMeter, SubjectGlyph, StatNumber });

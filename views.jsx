@@ -21,9 +21,9 @@ const MODE_LABELS = {
 function SubjectPickerModal({ mode, onPick, onClose }) {
   const store = useNbStore();
   return (
-    <div className="sn-overlay-enter" style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
+    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="sn-modal-enter" style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 12,
+      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 12,
         boxShadow: "0 16px 48px rgba(0,0,0,0.3)", width: 420, maxHeight: "72vh", display: "flex", flexDirection: "column" }}>
         <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--hairline)" }}>
           <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em" }}>{MODE_LABELS[mode]}</div>
@@ -185,7 +185,7 @@ function QuizzesContent({ onTakeQuiz }) {
         ].map((m, i) => (
           <div key={i} style={{
             background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius)",
-            padding: "13px 14px", animation: "fade-up 720ms cubic-bezier(0.22,1,0.36,1) both", animationDelay: (200 + i * 120) + "ms",
+            padding: "13px 14px",
           }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--rule)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(30,20,8,0.09)"; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--hairline)"; e.currentTarget.style.boxShadow = "none"; }}>
@@ -225,8 +225,8 @@ function QuizzesContent({ onTakeQuiz }) {
                   const rLabel = conf != null ? quizReadinessLabel(conf) : null;
                   const rBg    = conf != null ? quizReadinessBg(conf)    : "transparent";
                   return (
-                    <div key={q.id} className="sn-card sn-card-place"
-                      style={{ borderLeft: `3px solid ${s.color}`, cursor: "pointer", display: "flex", flexDirection: "column", animationDelay: (idx * 130) + "ms" }}
+                    <div key={q.id} className="sn-card"
+                      style={{ borderLeft: `3px solid ${s.color}`, cursor: "pointer", display: "flex", flexDirection: "column" }}
                       onClick={() => window.location.hash = "#/quiz-detail/" + q.id}>
 
                       {/* Top: subject + urgency */}
@@ -348,8 +348,8 @@ function QuizzesContent({ onTakeQuiz }) {
 
         </div>{/* end left */}
 
-        {/* ── RIGHT SIDEBAR — enters last, after main content settles ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "sn-slide-right 700ms cubic-bezier(0.22,1,0.36,1) both", animationDelay: "600ms" }}>
+        {/* ── RIGHT SIDEBAR ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
           {/* AI study recommendations */}
           {allUpcoming.length > 0 && (

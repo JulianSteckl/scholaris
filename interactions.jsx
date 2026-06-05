@@ -10,14 +10,14 @@ function Modal({ onClose, children, width = 640, top = "12vh" }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div onClick={onClose} className="sn-overlay-enter" style={{
+    <div onClick={onClose} style={{
       position: "fixed", inset: 0, zIndex: 100,
       background: "rgba(20, 16, 11, 0.42)",
       backdropFilter: "blur(2px)",
       display: "flex", justifyContent: "center", alignItems: "flex-start",
       paddingTop: top,
     }}>
-      <div onClick={(e) => e.stopPropagation()} className="sn-modal-enter sn-root" style={{
+      <div onClick={(e) => e.stopPropagation()} className="sn-root" style={{
         width, maxWidth: "92vw", maxHeight: "78vh",
         background: "var(--surface)", border: "1px solid var(--hairline)",
         borderRadius: 8, overflow: "hidden",

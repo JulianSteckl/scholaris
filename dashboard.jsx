@@ -113,7 +113,6 @@ Use real, helpful content based on their description. Make it genuinely useful f
       background: "var(--surface)", borderLeft: "1px solid var(--hairline)",
       boxShadow: "-12px 0 28px -16px rgba(20,16,11,0.18)",
       display: "flex", flexDirection: "column",
-      animation: "sn-slide-right var(--dur-layout) var(--ease-paper) both",
     }}>
       <div style={{ padding: "20px 22px 14px", borderBottom: "1px solid var(--hairline)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
@@ -473,8 +472,6 @@ function DashHeaderWidget({ variant, allHW, allQuizzes, sched }) {
             paddingLeft: i > 0 ? 28 : 0,
             borderLeft: i > 0 ? "1px solid var(--hairline)" : "none",
             marginLeft: i > 0 ? 28 : 0,
-            animation: "count-in .8s cubic-bezier(0.22,1,0.36,1) both",
-            animationDelay: (200 + i * 130) + "ms",
           }}>
             <div style={{ fontFamily: "var(--f-display)", fontSize: 42, lineHeight: 1, color: "var(--ink)", letterSpacing: "-0.025em" }}>
               {s.prefix && <span style={{ fontSize: 15, color: "var(--accent)", marginRight: 4, fontStyle: "italic" }}>{s.prefix}</span>}

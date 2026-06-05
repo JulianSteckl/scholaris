@@ -246,7 +246,6 @@ function HomeworkContent() {
             style={{
               background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius)",
               padding: "13px 14px", cursor: "default",
-              animation: "fade-up 720ms cubic-bezier(0.22,1,0.36,1) both", animationDelay: (200 + i * 100) + "ms",
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--rule)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(30,20,8,0.09)"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--hairline)"; e.currentTarget.style.boxShadow = "none"; }}>
@@ -266,7 +265,6 @@ function HomeworkContent() {
         <div style={{
           background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)",
           padding: "18px 20px", marginBottom: 22,
-          animation: "fade-up 750ms cubic-bezier(0.22,1,0.36,1) both", animationDelay: "350ms",
         }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -460,7 +458,7 @@ function HomeworkContent() {
 
       {/* ── EMPTY STATE ── */}
       {allHW.length === 0 && (
-        <div style={{ textAlign: "center", padding: "80px 0 40px", animation: "fade-up .25s ease" }}>
+        <div style={{ textAlign: "center", padding: "80px 0 40px" }}>
           <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 22, color: "var(--ink-3)", marginBottom: 18 }}>
             No assignments yet.
           </div>
@@ -491,7 +489,6 @@ function HwKanbanCard({ hw, onToggle, onDelete, onDragStart, onDragEnd, isDraggi
         borderRadius: "var(--radius)", overflow: "hidden", cursor: "pointer",
         opacity: isDragging ? 0.4 : 1,
         transition: "box-shadow .13s, transform .13s, opacity .13s, border-color .13s",
-        animation: "fade-up 720ms cubic-bezier(0.22,1,0.36,1) both",
       }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 3px 14px rgba(30,20,8,0.11)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = "var(--rule)"; }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; e.currentTarget.style.borderColor = "var(--hairline)"; }}
@@ -866,7 +863,7 @@ function HomeworkDetailPage({ hwId }) {
             {content && content.replace(/<[^>]+>/g,"").trim() && <span style={{ color: "var(--done)", marginLeft: 4 }}>· ✓</span>}
           </button>
           {notesOpen && (
-            <div style={{ marginTop: 6, background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, padding: "12px 16px", animation: "fade-up .15s ease" }}>
+            <div style={{ marginTop: 6, background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, padding: "12px 16px" }}>
               <style>{`[contenteditable][data-placeholder]:empty::before{content:attr(data-placeholder);color:var(--ink-3);pointer-events:none;display:block;font-style:italic}`}</style>
               <div ref={ceRef} contentEditable suppressContentEditableWarning
                 data-placeholder="Write anything — your approach, questions, links…"
