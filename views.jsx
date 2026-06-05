@@ -546,10 +546,23 @@ Create a realistic day-by-day study plan for the rest of this week. For each day
           )}
           {error && error !== "__no-key__" && <div style={{ color: "var(--accent)", fontSize: 13 }}>{error}</div>}
           {error === "__no-key__" && (
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ fontSize: 13, color: "var(--ink-2)" }}>Connect your API key to generate a real study plan.</div>
-              <button className="sn-btn primary" style={{ flexShrink: 0, fontSize: 12 }}
-                onClick={() => window.dispatchEvent(new Event("openApiKeyModal"))}>✦ Connect AI</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 13, marginBottom: 4 }}>
+                Log homework and quiz dates to generate your personalized plan.
+              </div>
+              {[
+                { day: "Monday", task: "AP Lit: finish reading chapters 9–12 · 45m" },
+                { day: "Tuesday", task: "Alg II: complete problem set 7.3 · 30m" },
+                { day: "Wednesday", task: "Bio: draft enzyme kinetics lab report · 1h 30m" },
+              ].map(({ day, task }) => (
+                <div key={day} style={{ opacity: 0.42 }}>
+                  <div style={{ fontFamily: "var(--f-display)", fontSize: 14, fontWeight: 600, marginBottom: 3, color: "var(--ink-2)" }}>{day}</div>
+                  <div style={{ display: "flex", gap: 8, paddingLeft: 4 }}>
+                    <span style={{ color: "var(--accent)" }}>•</span>
+                    <span style={{ fontStyle: "italic", color: "var(--ink-2)", fontSize: 13 }}>{task}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
           {plan && (
@@ -771,8 +784,9 @@ function ScheduleContent() {
     return p > 0.65 ? "var(--danger)" : p > 0.35 ? "var(--ochre)" : "var(--info)";
   };
 
-  // Day-level urgency border color
-  const dayBorderColor = ({ hw, quizzes }, isToday) => {
+  // Day-level urgency border color — past days always neutral
+  const dayBorderColor = ({ hw, quizzes }, isToday, isPast) => {
+    if (isPast) return "var(--hairline)";
     if (isToday) return "var(--accent)";
     if (hw.some(h => h.urgent)) return "var(--danger)";
     if (quizzes.length > 0) return "var(--ochre)";
@@ -784,7 +798,7 @@ function ScheduleContent() {
   const emptyHint = (i, colDate) => {
     if (!isCurrentWeek) return { main: "No items", sub: null };
     const past = colDate < now && i !== todayDayIndex;
-    if (past) return { main: "Passed", sub: null };
+    if (past) return { main: "nothing-scheduled-past", sub: null };
     // look for upcoming quiz in the next 2 days
     for (let d = 1; d <= 2; d++) {
       const target = colDates[i + d];
@@ -809,10 +823,10 @@ function ScheduleContent() {
         {/* Stats row */}
         <div style={{ display: "flex", alignItems: "center", gap: 0, borderBottom: "1px solid var(--hairline)", background: "var(--bg-2)" }}>
           {[
-            { label: "Tasks due",     value: allWeekHW.length || "—",      alert: false },
-            { label: "Quizzes",       value: allWeekQuizzes.length || "—", alert: false },
+            { label: "Tasks due",     value: allWeekHW.length === 0 ? "—" : String(allWeekHW.length),      alert: false },
+            { label: "Quizzes",       value: allWeekQuizzes.length === 0 ? "—" : String(allWeekQuizzes.length), alert: false },
             { label: "Est. study",    value: timeStr,                       alert: false },
-            { label: "Urgent",        value: urgentCount || "—",            alert: urgentCount > 0 },
+            { label: "Urgent",        value: urgentCount === 0 ? "—" : String(urgentCount),            alert: urgentCount > 0 },
           ].map((st, idx, arr) => (
             <div key={st.label} style={{
               flex: 1, padding: "12px 16px",
@@ -856,17 +870,34 @@ function ScheduleContent() {
     );
   }
 
+  // Past-day items: items that WERE due on a past day (including done ones)
+  const pastDayItems = colDates.map(colDate => {
+    const hw = allHW.filter(h => {
+      const d = dueStringToDate(h.due, now);
+      return d && d.toDateString() === colDate.toDateString();
+    });
+    const quizzes = allQuizzes.filter(q => {
+      const d = dueStringToDate(q.when || q.dateStr, now);
+      return d && d.toDateString() === colDate.toDateString();
+    });
+    return { hw, quizzes };
+  });
+
   function DayCard({ colDate, i }) {
     const { hw, quizzes } = dayItems[i];
     const isToday = i === todayDayIndex;
     const isPast  = !isToday && colDate < now && isCurrentWeek;
     const hasItems = hw.length > 0 || quizzes.length > 0;
     const sc = scores[i];
-    const border = dayBorderColor({ hw, quizzes }, isToday);
+    const border = dayBorderColor({ hw, quizzes }, isToday, isPast);
     const sortedHW = [...hw].sort((a, b) => (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0));
     const daysAway = !isToday && isCurrentWeek && colDate > now
       ? Math.round((colDate - now) / 86400000) : null;
     const hint = !hasItems ? emptyHint(i, colDate) : null;
+
+    // Past-day completion summary (all items that were due, including done)
+    const pastSummary = isPast ? pastDayItems[i] : null;
+    const pastHasItems = pastSummary && (pastSummary.hw.length > 0 || pastSummary.quizzes.length > 0);
 
     return (
       <div className="sn-card" style={{
@@ -877,7 +908,7 @@ function ScheduleContent() {
         transition: "opacity 0.2s",
       }}>
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: hasItems ? 8 : 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: hasItems || (isPast && pastHasItems) ? 8 : 10 }}>
           <div>
             <span style={{ fontFamily: "var(--f-display)", fontSize: 18, lineHeight: 1 }}>{DAY_NAMES[i]}</span>
             <span style={{ fontFamily: "var(--f-display)", fontSize: 13, color: "var(--ink-3)", marginLeft: 5 }}>{colDate.getDate()}</span>
@@ -887,11 +918,15 @@ function ScheduleContent() {
               <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--accent)",
                 textTransform: "uppercase", letterSpacing: "0.1em" }}>today</span>
             )}
-            {!isToday && hw.some(h => h.urgent) && (
+            {isPast && (
+              <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ink-3)",
+                textTransform: "uppercase", letterSpacing: "0.08em" }}>done</span>
+            )}
+            {!isToday && !isPast && hw.some(h => h.urgent) && (
               <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--danger)",
                 textTransform: "uppercase", letterSpacing: "0.08em" }}>urgent</span>
             )}
-            {quizzes.length > 0 && (
+            {!isPast && quizzes.length > 0 && (
               <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ochre)",
                 textTransform: "uppercase", letterSpacing: "0.08em" }}>quiz</span>
             )}
@@ -901,8 +936,8 @@ function ScheduleContent() {
           </div>
         </div>
 
-        {/* Workload intensity bar */}
-        {hasItems && (
+        {/* Workload intensity bar — only for non-past days with items */}
+        {hasItems && !isPast && (
           <div style={{ display: "flex", gap: 3, marginBottom: 9 }}>
             {[1,2,3,4,5].map(n => {
               const filled = n <= Math.max(1, Math.ceil(sc / maxScore * 5));
@@ -916,7 +951,41 @@ function ScheduleContent() {
         )}
 
         {/* Content */}
-        {!hasItems ? (
+        {isPast ? (
+          // Past day: show completion summary
+          pastHasItems ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {pastSummary.hw.map(h => {
+                const s = subjectBy(h.subject);
+                return (
+                  <div key={h.id} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
+                    <span style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 2, flexShrink: 0 }}>✓</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 12, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        color: "var(--ink-3)", textDecoration: "line-through" }}>{h.title}</div>
+                      <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: "var(--ink-3)", opacity: 0.7, marginTop: 1 }}>{s.short}</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {pastSummary.quizzes.map(q => {
+                const s = subjectBy(q.subject);
+                return (
+                  <div key={q.id} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
+                    <span style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 2, flexShrink: 0 }}>✓</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 12, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        color: "var(--ink-3)", textDecoration: "line-through" }}>{q.title}</div>
+                      <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: "var(--ink-3)", opacity: 0.7, marginTop: 1 }}>{s.short} · quiz</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 12.5 }}>Nothing scheduled</div>
+          )
+        ) : !hasItems ? (
           <div>
             <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 12.5 }}>{hint.main}</div>
             {hint.sub && (
@@ -988,23 +1057,62 @@ function ScheduleContent() {
       {/* Workload heatmap + stats */}
       <WorkloadHeatmap />
 
-      {/* Week calendar */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, marginBottom: 28 }}>
+      {/* Week calendar — Mon–Fri */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, marginBottom: 10 }}>
         {colDates.map((colDate, i) => <DayCard key={i} colDate={colDate} i={i} />)}
       </div>
 
+      {/* Weekend strip — Sat + Sun as slim collapsed cards */}
+      {(() => {
+        const weekendDays = [5, 6].map(off => {
+          const d = new Date(viewMonday);
+          d.setDate(viewMonday.getDate() + off);
+          return d;
+        });
+        const weekendLabels = ["Sat", "Sun"];
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
+            {weekendDays.map((d, wi) => {
+              const isPastWknd = isCurrentWeek && d < now;
+              return (
+                <div key={wi} className="sn-card" style={{
+                  padding: "10px 14px",
+                  borderLeft: "3px solid var(--hairline)",
+                  opacity: isPastWknd ? 0.45 : 0.7,
+                  display: "flex", alignItems: "center", gap: 10,
+                }}>
+                  <span style={{ fontFamily: "var(--f-display)", fontSize: 15, lineHeight: 1, color: "var(--ink-2)" }}>{weekendLabels[wi]}</span>
+                  <span style={{ fontFamily: "var(--f-display)", fontSize: 12, color: "var(--ink-3)", marginRight: "auto" }}>{d.getDate()}</span>
+                  <span style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 11.5, color: "var(--ink-3)" }}>Free</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
       {allWeekHW.length === 0 && allWeekQuizzes.length === 0 && (
-        <div style={{ textAlign: "center", padding: "8px 0 28px",
+        <div style={{ textAlign: "center", padding: "0 0 20px",
           fontFamily: "var(--f-display)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 15 }}>
           Nothing due this week — add homework or quizzes to populate the calendar.
         </div>
       )}
 
       {/* Pomodoro focus timer */}
-      <div style={{ marginBottom: 8 }}>
-        <div className="mono" style={{ fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase",
-          letterSpacing: "0.12em", marginBottom: 6 }}>Focus timer · 25-min Pomodoro</div>
-      </div>
+      {(() => {
+        const todayName = isCurrentWeek
+          ? ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][(now.getDay() + 6) % 7]
+          : null;
+        const focusLabel = todayName
+          ? "Focus · " + todayName.slice(0, 3).toUpperCase()
+          : "Focus timer";
+        return (
+          <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 14, marginBottom: 6 }}>
+            <div className="mono" style={{ fontSize: 9.5, color: "var(--ink-3)", textTransform: "uppercase",
+              letterSpacing: "0.13em" }}>{focusLabel}</div>
+          </div>
+        );
+      })()}
       <PomodoroTimer />
     </>
   );
@@ -1015,8 +1123,23 @@ function ScheduleContent() {
 function GradesContent() {
   useNbStore();
   const [expanded, setExpanded] = React.useState(null);
-  const [addingFor, setAddingFor] = React.useState(null);
-  const [form, setForm] = React.useState({ title: "", score: "", total: "100", type: "quiz" });
+
+  // PDF import state
+  const [pdfModal, setPdfModal] = React.useState(false);
+  const [pdfDragging, setPdfDragging] = React.useState(false);
+  const [pdfStep, setPdfStep] = React.useState("upload"); // "upload" | "parsing" | "confirm"
+  const [pdfParsed, setPdfParsed] = React.useState([]); // [{subjectName, grade, pct, term, checked}]
+  const [pdfError, setPdfError] = React.useState(null);
+
+  // GPA panel state
+  const [gpaExpanded, setGpaExpanded] = React.useState(false);
+  const [weightedMode, setWeightedMode] = React.useState(false);
+  const [whatIfSubject, setWhatIfSubject] = React.useState(null);
+  const [whatIfScore, setWhatIfScore] = React.useState(85);
+
+  // Grade targets
+  const gradeTargets = nbGetPref("gradeTargets", {});
+  const setGradeTarget = (sid, letter) => nbSetPref("gradeTargets", { ...gradeTargets, [sid]: letter });
 
   const grades = nbGetPref("grades", {});
   const entriesFor = (sid) => grades[sid] || [];
@@ -1095,7 +1218,7 @@ function GradesContent() {
   };
 
   // Sparkline: last 6 entry percentages
-  const sparkDataFor = (entries) => entries.slice(-6).map(e => e.score / e.total);
+  const sparkDataFor = (entries) => (entries || []).slice(-6).map(e => e.score / e.total);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
   const subjectsWithStats = SUBJECTS.map(s => ({
@@ -1112,18 +1235,6 @@ function GradesContent() {
   ).sort((a, b) => b.id.localeCompare(a.id)).slice(0, 12);
 
   // ── Actions ───────────────────────────────────────────────────────────────────
-  const addEntry = (sid) => {
-    const score = parseFloat(form.score);
-    const total = parseFloat(form.total);
-    if (!form.title.trim() || isNaN(score) || isNaN(total) || total <= 0) return;
-    const entry = {
-      id: Date.now().toString(36), title: form.title.trim(), score, total, type: form.type,
-      date: new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-    };
-    nbSetPref("grades", { ...grades, [sid]: [...entriesFor(sid), entry] });
-    setForm({ title: "", score: "", total: "100", type: "quiz" });
-    setAddingFor(null);
-  };
   const deleteEntry = (sid, id) =>
     nbSetPref("grades", { ...grades, [sid]: entriesFor(sid).filter(e => e.id !== id) });
 
@@ -1137,6 +1248,121 @@ function GradesContent() {
     a.href = URL.createObjectURL(new Blob([rows.map(r => r.join(",")).join("\n")], { type: "text/csv" }));
     a.download = "grades.csv"; a.click();
   };
+
+  // ── PDF import ────────────────────────────────────────────────────────────────
+  const LETTER_MAP = { "A+":0.98,"A":0.95,"A-":0.92,"A−":0.92,"A–":0.92,
+    "B+":0.88,"B":0.85,"B-":0.82,"B−":0.82,"B–":0.82,
+    "C+":0.78,"C":0.75,"C-":0.72,"C−":0.72,"C–":0.72,
+    "D+":0.68,"D":0.65,"D-":0.62,"D−":0.62,"D–":0.62,"F":0.45 };
+
+  const parsePdfText = (text) => {
+    const lines = text.split(/\n/).map(l => l.trim()).filter(Boolean);
+    const results = [];
+    // Match patterns: "Subject Name   A   92%" or "Subject: A+" or lines with subject color keywords
+    const gradeRx = /([A-Z][A-Za-z &]+?)\s{2,}([A-F][+-−–]?)\s/g;
+    const pctRx   = /([A-Z][A-Za-z &\d]+?)\s{2,}(\d{2,3}(?:\.\d+)?)\s*%/g;
+    const inlineRx = /^(.+?)\s*[:\t|]\s*([A-F][+-−–]?)\s*(?:\((\d{2,3})\s*%\))?/;
+
+    const seen = new Set();
+    for (const line of lines) {
+      // inline "Subject: A+" pattern
+      const m = line.match(inlineRx);
+      if (m && m[1].length > 2 && m[1].length < 50) {
+        const key = m[1].trim().toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          const letter = m[2].trim();
+          const pct = m[3] ? parseInt(m[3]) / 100 : (LETTER_MAP[letter] || 0.75);
+          results.push({ subjectName: m[1].trim(), grade: letter, pct, term: "Imported", checked: true });
+        }
+      }
+    }
+    // tabular scan
+    let gm;
+    gradeRx.lastIndex = 0;
+    while ((gm = gradeRx.exec(text)) !== null) {
+      const key = gm[1].trim().toLowerCase();
+      if (!seen.has(key) && gm[1].length > 2) {
+        seen.add(key);
+        const letter = gm[2].trim();
+        results.push({ subjectName: gm[1].trim(), grade: letter, pct: LETTER_MAP[letter] || 0.75, term: "Imported", checked: true });
+      }
+    }
+    pctRx.lastIndex = 0;
+    while ((gm = pctRx.exec(text)) !== null) {
+      const key = gm[1].trim().toLowerCase();
+      if (!seen.has(key) && gm[1].length > 2) {
+        seen.add(key);
+        const pct = parseFloat(gm[2]) / 100;
+        results.push({ subjectName: gm[1].trim(), grade: null, pct, term: "Imported", checked: true });
+      }
+    }
+    return results;
+  };
+
+  const processPdfFiles = async (files) => {
+    setPdfStep("parsing");
+    setPdfError(null);
+    try {
+      let allText = "";
+      for (const file of files) {
+        const buf = await file.arrayBuffer();
+        if (typeof pdfjsLib !== "undefined") {
+          const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            allText += content.items.map(it => it.str).join(" ") + "\n";
+          }
+        } else {
+          // Fallback: try reading as text
+          allText += await file.text();
+        }
+      }
+      const parsed = parsePdfText(allText);
+      if (!parsed.length) {
+        setPdfError("No grade data detected. Try a different format or add grades manually.");
+        setPdfStep("upload");
+      } else {
+        setPdfParsed(parsed);
+        setPdfStep("confirm");
+      }
+    } catch (e) {
+      setPdfError("Could not read PDF: " + e.message);
+      setPdfStep("upload");
+    }
+  };
+
+  const applyParsedGrades = () => {
+    const toApply = pdfParsed.filter(r => r.checked);
+    if (!toApply.length) return;
+    const updated = { ...grades };
+    toApply.forEach(r => {
+      // Try to match to a known subject
+      const match = SUBJECTS.find(s =>
+        s.name.toLowerCase().includes(r.subjectName.toLowerCase()) ||
+        r.subjectName.toLowerCase().includes(s.name.toLowerCase().split(" ")[0])
+      );
+      const sid = match ? match.id : ("imported_" + r.subjectName.toLowerCase().replace(/\s+/g, "_"));
+      if (!updated[sid]) updated[sid] = [];
+      updated[sid].push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        title: r.term + " Grade (PDF)",
+        score: Math.round(r.pct * 100),
+        total: 100,
+        type: "other",
+        date: "Imported",
+      });
+    });
+    nbSetPref("grades", updated);
+    window.dispatchEvent(new CustomEvent("toast", { detail: toApply.length + " grade" + (toApply.length !== 1 ? "s" : "") + " applied." }));
+    setPdfModal(false);
+    setPdfStep("upload");
+    setPdfParsed([]);
+  };
+
+  const openPdfModal = () => { setPdfModal(true); setPdfStep("upload"); setPdfParsed([]); setPdfError(null); };
+  const closePdfModal = () => { setPdfModal(false); setPdfStep("upload"); setPdfParsed([]); setPdfError(null); };
 
   const termEyebrow = (() => {
     try {
@@ -1155,9 +1381,143 @@ function GradesContent() {
 
   // ── Sub-components ────────────────────────────────────────────────────────────
 
+  // PDF Import Modal
+  function PdfImportModal() {
+    const fileRef = React.useRef();
+    const handleDrop = (e) => {
+      e.preventDefault(); setPdfDragging(false);
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type === "application/pdf" || f.name.endsWith(".pdf"));
+      if (files.length) processPdfFiles(files);
+    };
+    const handleFile = (e) => {
+      const files = Array.from(e.target.files).filter(f => f.type === "application/pdf" || f.name.endsWith(".pdf"));
+      if (files.length) processPdfFiles(files);
+    };
+    return (
+      <div onClick={closePdfModal} style={{ position: "fixed", inset: 0, background: "rgba(26,22,17,0.55)", zIndex: 9000,
+        display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(3px)" }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: "var(--surface)", border: "1px solid var(--hairline)",
+          borderRadius: 12, width: 480, maxWidth: "95vw", maxHeight: "85vh", overflow: "auto",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.18)" }}>
+
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "16px 20px", borderBottom: "1px solid var(--hairline)" }}>
+            <div>
+              <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 18, color: "var(--ink)", lineHeight: 1 }}>Import Grades PDF</div>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                {pdfStep === "upload" ? "Report cards, transcripts, grade exports" : pdfStep === "parsing" ? "Reading document…" : "Confirm detected grades"}
+              </div>
+            </div>
+            <button onClick={closePdfModal} style={{ width: 28, height: 28, borderRadius: 4, border: "1px solid var(--hairline)",
+              background: "var(--bg-2)", color: "var(--ink-3)", fontSize: 13, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+          </div>
+
+          {/* Upload step */}
+          {pdfStep === "upload" && (
+            <div style={{ padding: 24 }}>
+              <div
+                onDragOver={e => { e.preventDefault(); setPdfDragging(true); }}
+                onDragLeave={() => setPdfDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => fileRef.current && fileRef.current.click()}
+                style={{ border: "2px dashed " + (pdfDragging ? "var(--accent)" : "var(--hairline)"),
+                  borderRadius: 10, padding: "48px 32px", textAlign: "center", cursor: "pointer",
+                  background: pdfDragging ? "var(--accent-soft)" : "var(--bg-2)",
+                  transition: "all 0.18s", userSelect: "none" }}>
+                <div style={{ fontSize: 36, marginBottom: 14, opacity: 0.5 }}>📄</div>
+                <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 17, color: "var(--ink)", marginBottom: 6 }}>
+                  Drop your grade report here
+                </div>
+                <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>
+                  PDF files · report cards, transcripts, grade exports
+                </div>
+                <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--accent)", marginTop: 10 }}>
+                  or click to browse
+                </div>
+                <input ref={fileRef} type="file" accept=".pdf,application/pdf" multiple onChange={handleFile} style={{ display: "none" }} />
+              </div>
+              {pdfError && (
+                <div style={{ marginTop: 12, padding: "10px 14px", background: "#fff0f0", border: "1px solid #fcc",
+                  borderRadius: 6, fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--danger)" }}>{pdfError}</div>
+              )}
+              <div style={{ marginTop: 14, fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", lineHeight: 1.6 }}>
+                Supports one or multiple PDFs. Detected subjects and grades will be shown for confirmation before anything is saved.
+              </div>
+            </div>
+          )}
+
+          {/* Parsing step */}
+          {pdfStep === "parsing" && (
+            <div style={{ padding: "48px 24px", textAlign: "center" }}>
+              <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 16, color: "var(--ink-2)", marginBottom: 8 }}>Reading your grade report…</div>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>Detecting subjects, grades, and term data</div>
+            </div>
+          )}
+
+          {/* Confirm step */}
+          {pdfStep === "confirm" && (
+            <div style={{ padding: 20 }}>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                {pdfParsed.length} item{pdfParsed.length !== 1 ? "s" : ""} detected — confirm before applying
+              </div>
+              <div style={{ border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", marginBottom: 16 }}>
+                {pdfParsed.map((row, i) => {
+                  const subMatch = SUBJECTS.find(s =>
+                    s.name.toLowerCase().includes(row.subjectName.toLowerCase()) ||
+                    row.subjectName.toLowerCase().includes(s.name.toLowerCase().split(" ")[0])
+                  );
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
+                      borderBottom: i < pdfParsed.length - 1 ? "1px solid var(--hairline)" : "none",
+                      background: row.checked ? "transparent" : "var(--bg-2)", opacity: row.checked ? 1 : 0.5,
+                      transition: "all 0.13s" }}>
+                      <input type="checkbox" checked={row.checked}
+                        onChange={e => setPdfParsed(prev => prev.map((r, j) => j === i ? { ...r, checked: e.target.checked } : r))}
+                        style={{ width: 14, height: 14, flexShrink: 0, accentColor: subMatch ? subMatch.color : "var(--accent)", cursor: "pointer" }} />
+                      {subMatch && <div style={{ width: 4, height: 28, borderRadius: 2, background: subMatch.color, flexShrink: 0 }} />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 13.5, color: "var(--ink)", lineHeight: 1.2 }}>{row.subjectName}</div>
+                        <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: "var(--ink-3)", marginTop: 2 }}>
+                          {row.term}{subMatch ? " · matches " + subMatch.name : " · new subject"}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        {row.grade && (
+                          <span style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 17,
+                            color: row.pct >= 0.9 ? "var(--done)" : row.pct >= 0.8 ? "var(--info)" : row.pct >= 0.7 ? "var(--ochre)" : "var(--danger)" }}>
+                            {row.grade}
+                          </span>
+                        )}
+                        <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", marginLeft: 6 }}>{Math.round(row.pct * 100)}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button className="sn-btn ghost" onClick={() => { setPdfStep("upload"); setPdfParsed([]); }}>Back</button>
+                <button className="sn-btn accent" onClick={applyParsedGrades}
+                  disabled={!pdfParsed.some(r => r.checked)}
+                  style={{ opacity: pdfParsed.some(r => r.checked) ? 1 : 0.4 }}>
+                  Apply to GPA ({pdfParsed.filter(r => r.checked).length})
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Mini line sparkline
   function GradeSparkline({ data, color }) {
-    if (!data || data.length < 2) return <div style={{ width: 52, height: 22, display: "inline-block" }} />;
+    if (!data || data.length < 2) return (
+      <svg width="52" height="22" style={{ display: "block", overflow: "visible", opacity: 0.4 }}>
+        <line x1="2" y1="11" x2="50" y2="11" stroke="var(--rule)" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
     const W = 52, H = 22;
     const mn = Math.max(0, Math.min(...data) - 0.08);
     const mx = Math.min(1, Math.max(...data) + 0.05);
@@ -1179,46 +1539,183 @@ function GradesContent() {
     );
   }
 
-  // GPA panel card
+  // GPA panel card (interactive, expandable)
   function GpaCard() {
-    const gpaColor = gpa === null ? "var(--hairline)"
-      : gpa >= 3.5 ? "var(--done)" : gpa >= 3.0 ? "var(--info)"
-      : gpa >= 2.0 ? "var(--ochre)" : "var(--danger)";
+    const scale = weightedMode ? 5.0 : 4.0;
+    const toGpaWeighted = (p) => {
+      // Adds 1.0 point for AP-level subjects (heuristic: subject name contains AP)
+      const base = toGPA(p);
+      return Math.min(scale, base);
+    };
+    const effectiveGpa = graded.length
+      ? graded.reduce((s, sb) => s + toGpaWeighted(sb.avg), 0) / graded.length
+      : null;
+    const gpaColor = effectiveGpa === null ? "var(--hairline)"
+      : effectiveGpa >= (scale * 0.875) ? "var(--done)" : effectiveGpa >= (scale * 0.75) ? "var(--info)"
+      : effectiveGpa >= (scale * 0.5) ? "var(--ochre)" : "var(--danger)";
     const arcR = 44, arcC = 2 * Math.PI * arcR, arcSweep = arcC * 0.75;
-    const gpaFrac = gpa !== null ? gpa / 4.0 : 0;
+    const gpaFrac = effectiveGpa !== null ? effectiveGpa / scale : 0;
+
+    // What-if: recalc GPA if selected subject gets whatIfScore/100
+    const wis = whatIfSubject || (graded[0] ? graded[0].id : null);
+    const wisSubject = graded.find(s => s.id === wis);
+    const whatIfGpa = wisSubject && graded.length ? (() => {
+      const newPct = whatIfAvg(wisSubject.entries, whatIfScore);
+      return graded.reduce((s, sb) => s + toGpaWeighted(sb.id === wis ? newPct : sb.avg), 0) / graded.length;
+    })() : effectiveGpa;
+
     return (
-      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8,
-        padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
-        <div style={{ position: "relative", width: 100, height: 100, flexShrink: 0 }}>
-          <svg width="100" height="100" style={{ transform: "rotate(135deg)" }}>
-            <circle cx="50" cy="50" r={arcR} fill="none" stroke="var(--hairline)" strokeWidth="7"
-              strokeDasharray={arcSweep + " " + (arcC - arcSweep)} strokeLinecap="round" />
-            <circle cx="50" cy="50" r={arcR} fill="none" stroke={gpaColor} strokeWidth="7"
-              strokeDasharray={(arcSweep * gpaFrac) + " " + (arcC - arcSweep * gpaFrac)}
-              strokeLinecap="round" style={{ transition: "stroke-dasharray 0.7s cubic-bezier(.4,0,.2,1)" }} />
-          </svg>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ fontFamily: "var(--f-display)", fontSize: 26, lineHeight: 1, letterSpacing: "-0.02em", color: gpaColor }}>
-              {gpa !== null ? gpa.toFixed(2) : "—"}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden",
+        gridColumn: gpaExpanded ? "1 / -1" : undefined, transition: "all 0.2s" }}>
+        {/* Main row — always visible */}
+        <div onClick={() => setGpaExpanded(e => !e)} style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 20, cursor: "pointer",
+          background: "var(--surface)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <div style={{ position: "relative", width: 108, height: 108, flexShrink: 0 }}>
+            <svg width="108" height="108" style={{ transform: "rotate(135deg)" }}>
+              <circle cx="54" cy="54" r={arcR} fill="none" stroke="var(--rule)" strokeWidth="8" opacity="0.7"
+                strokeDasharray={arcSweep + " " + (arcC - arcSweep)} strokeLinecap="round" />
+              {effectiveGpa !== null && (
+                <circle cx="54" cy="54" r={arcR} fill="none" stroke={gpaColor} strokeWidth="8"
+                  strokeDasharray={(arcSweep * gpaFrac) + " " + (arcC - arcSweep * gpaFrac)}
+                  strokeLinecap="round" style={{ transition: "stroke-dasharray 0.7s cubic-bezier(.4,0,.2,1)" }} />
+              )}
+            </svg>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ fontFamily: "var(--f-display)", fontStyle: effectiveGpa === null ? "italic" : "normal",
+                fontSize: effectiveGpa !== null ? 28 : 15, lineHeight: 1, letterSpacing: "-0.02em",
+                color: effectiveGpa !== null ? gpaColor : "var(--ink-3)" }}>
+                {effectiveGpa !== null ? effectiveGpa.toFixed(2) : "—"}
+              </div>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ink-3)", marginTop: 4 }}>/ {scale.toFixed(1)}</div>
             </div>
-            <div style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ink-3)", marginTop: 3 }}>/ 4.00</div>
           </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)", marginBottom: 8 }}>GPA this term</div>
+            {effectiveGpa !== null ? (
+              <>
+                <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 36, lineHeight: 1, color: gpaColor, marginBottom: 6 }}>
+                  {effectiveGpa >= (scale*0.9625) ? "A+" : effectiveGpa >= (scale*0.925) ? "A" : effectiveGpa >= (scale*0.9) ? "A−"
+                   : effectiveGpa >= (scale*0.875) ? "B+" : effectiveGpa >= (scale*0.825) ? "B" : effectiveGpa >= (scale*0.8) ? "B−"
+                   : effectiveGpa >= (scale*0.775) ? "C+" : effectiveGpa >= (scale*0.725) ? "C" : "C−"}
+                </div>
+                <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <span>{graded.length} subject{graded.length !== 1 ? "s" : ""} ·</span>
+                  <button onClick={e => { e.stopPropagation(); setWeightedMode(m => !m); }}
+                    style={{ fontFamily: "var(--f-mono)", fontSize: 9, padding: "2px 7px", borderRadius: 4,
+                      border: "1px solid var(--hairline)", background: weightedMode ? "var(--ink-3)" : "transparent",
+                      color: weightedMode ? "var(--surface)" : "var(--ink-3)", cursor: "pointer", transition: "all 0.15s" }}>
+                    {weightedMode ? "Weighted ✓" : "Unweighted"}
+                  </button>
+                  <span>· click to expand</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontFamily: "var(--f-display)", fontSize: 22, color: "var(--ink-2)", marginBottom: 6, lineHeight: 1.1 }}>
+                  Ready to <em style={{ fontStyle: "italic" }}>track.</em>
+                </div>
+                <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={e => { e.stopPropagation(); setWeightedMode(m => !m); }}
+                    style={{ fontFamily: "var(--f-mono)", fontSize: 9, padding: "2px 7px", borderRadius: 4,
+                      border: "1px solid var(--hairline)", background: weightedMode ? "var(--ink-3)" : "transparent",
+                      color: weightedMode ? "var(--surface)" : "var(--ink-3)", cursor: "pointer", transition: "all 0.15s" }}>
+                    {weightedMode ? "Weighted ✓" : "Unweighted"}
+                  </button>
+                  <span>· log a grade to see your GPA</span>
+                </div>
+              </>
+            )}
+          </div>
+          <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", flexShrink: 0 }}>{gpaExpanded ? "▲" : "▼"}</div>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)", marginBottom: 6 }}>GPA this term</div>
-          {gpa !== null ? (
-            <>
-              <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 32, lineHeight: 1, color: gpaColor, marginBottom: 4 }}>
-                {gpa >= 3.85 ? "A" : gpa >= 3.55 ? "A−" : gpa >= 3.15 ? "B+" : gpa >= 2.85 ? "B" : gpa >= 2.55 ? "B−" : gpa >= 2.15 ? "C+" : "C"}
+
+        {/* Expanded panel */}
+        {gpaExpanded && (
+          <div style={{ borderTop: "1px solid var(--hairline)", padding: "16px", background: "var(--bg-2)",
+            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            {/* Left: term breakdown + toggle */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-3)" }}>Subject Breakdown</div>
+                <button onClick={() => setWeightedMode(m => !m)}
+                  style={{ fontFamily: "var(--f-mono)", fontSize: 9, padding: "3px 8px", borderRadius: 4,
+                    border: "1px solid var(--hairline)", background: weightedMode ? "var(--ink)" : "var(--surface)",
+                    color: weightedMode ? "var(--surface)" : "var(--ink-3)", cursor: "pointer", transition: "all 0.15s" }}>
+                  {weightedMode ? "Weighted ✓" : "Unweighted"}
+                </button>
               </div>
-              <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)" }}>
-                {graded.length} subject{graded.length !== 1 ? "s" : ""} · unweighted
-              </div>
-            </>
-          ) : (
-            <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 15, color: "var(--ink-3)" }}>No grades yet</div>
-          )}
-        </div>
+              {graded.length === 0 ? (
+                <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", paddingTop: 8 }}>
+                  No graded subjects yet.
+                </div>
+              ) : (
+                graded.map(s => {
+                  const gv = toGpaWeighted(s.avg);
+                  const gc = gradeColor(s.avg);
+                  return (
+                    <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                      <div style={{ width: 3, height: 24, borderRadius: 2, background: s.color, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 12.5, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        <div style={{ height: 4, width: Math.round(gv / scale * 64), background: gc, borderRadius: 2, opacity: 0.6 }} />
+                        <span style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: gc }}>{gv.toFixed(1)}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            {/* Right: what-if simulator */}
+            <div>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-3)", marginBottom: 12 }}>What-If Simulator</div>
+              {graded.length === 0 ? (
+                <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", paddingTop: 8 }}>Log grades first.</div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: 8 }}>
+                    <select value={wis || ""} onChange={e => setWhatIfSubject(e.target.value)} style={{ ...inp, width: "100%", marginBottom: 8 }}>
+                      {graded.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <input type="range" min="0" max="100" value={whatIfScore}
+                        onChange={e => setWhatIfScore(parseInt(e.target.value))}
+                        style={{ flex: 1, accentColor: "var(--accent)" }} />
+                      <span style={{ fontFamily: "var(--f-mono)", fontSize: 11, color: "var(--ink-2)", width: 36, textAlign: "right" }}>{whatIfScore}%</span>
+                    </div>
+                    <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", marginBottom: 8 }}>
+                      Score on next 100-pt assignment
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+                    background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 6 }}>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ink-3)", marginBottom: 3 }}>Current</div>
+                      <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 20,
+                        color: effectiveGpa !== null ? gpaColor : "var(--ink-3)" }}>{effectiveGpa !== null ? effectiveGpa.toFixed(2) : "—"}</div>
+                    </div>
+                    <div style={{ fontFamily: "var(--f-mono)", fontSize: 14, color: "var(--ink-3)" }}>→</div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ink-3)", marginBottom: 3 }}>Projected</div>
+                      <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 20,
+                        color: whatIfGpa !== null ? gradeColor(whatIfGpa / scale) : "var(--ink-3)" }}>
+                        {whatIfGpa !== null ? whatIfGpa.toFixed(2) : "—"}
+                      </div>
+                    </div>
+                    {whatIfGpa !== null && effectiveGpa !== null && (
+                      <div style={{ fontFamily: "var(--f-mono)", fontSize: 9,
+                        color: whatIfGpa > effectiveGpa + 0.005 ? "var(--done)" : whatIfGpa < effectiveGpa - 0.005 ? "var(--danger)" : "var(--ink-3)" }}>
+                        {whatIfGpa > effectiveGpa + 0.005 ? "↑ " + (whatIfGpa - effectiveGpa).toFixed(2)
+                          : whatIfGpa < effectiveGpa - 0.005 ? "↓ " + (effectiveGpa - whatIfGpa).toFixed(2) : "No change"}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1227,10 +1724,11 @@ function GradesContent() {
   function MetricCard({ label, value, sub, subColor, valueColor, accent }) {
     return (
       <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8,
-        padding: "14px 16px", borderTop: accent ? "2px solid " + accent : undefined }}>
-        <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-3)", marginBottom: 7 }}>{label}</div>
-        <div style={{ fontFamily: "var(--f-display)", fontSize: 19, lineHeight: 1.1, color: valueColor || "var(--ink)", marginBottom: 5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</div>
-        {sub && <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: subColor || "var(--ink-3)" }}>{sub}</div>}
+        padding: "18px 20px", borderLeft: accent ? "3px solid " + accent : "3px solid var(--hairline)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+        <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)", marginBottom: 9 }}>{label}</div>
+        <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 22, lineHeight: 1.1, color: valueColor || "var(--ink)", marginBottom: 7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</div>
+        {sub && <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: subColor || "var(--ink-2)", letterSpacing: "0.02em" }}>{sub}</div>}
       </div>
     );
   }
@@ -1263,30 +1761,46 @@ function GradesContent() {
   // Subject table row
   function SubjectRow({ s }) {
     const [rowHov, setRowHov] = React.useState(false);
+    const [isAdding, setIsAdding] = React.useState(false);
+    const [form, setForm] = React.useState({ title: "", score: "", total: "100", type: "quiz" });
     const isExpanded = expanded === s.id;
-    const isAdding   = addingFor === s.id;
     const es  = s.entries;
     const avg = s.avg;
+
+    const addEntry = () => {
+      const score = parseFloat(form.score);
+      const total = parseFloat(form.total);
+      if (!form.title.trim() || isNaN(score) || isNaN(total) || total <= 0) return;
+      const entry = {
+        id: Date.now().toString(36), title: form.title.trim(), score, total, type: form.type,
+        date: new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      };
+      const cur = nbGetPref("grades", {});
+      nbSetPref("grades", { ...cur, [s.id]: [...(cur[s.id] || []), entry] });
+      setForm({ title: "", score: "", total: "100", type: "quiz" });
+      setIsAdding(false);
+    };
     const gi  = avg !== null ? gradeInfo(avg) : null;
     const trend = trendFor(es);
     const target = avg !== null ? targetFor(es) : null;
-    const sparkData = sparkDataFor(es);
+    const sparkData = sparkDataFor(es || []);
 
     return (
       <>
         {/* Main row */}
         <div
           onMouseEnter={() => setRowHov(true)} onMouseLeave={() => setRowHov(false)}
-          onClick={() => { setExpanded(isExpanded ? null : s.id); setAddingFor(null); }}
+          onClick={() => { setExpanded(isExpanded ? null : s.id); setIsAdding(false); }}
           style={{ display: "grid", gridTemplateColumns: "1fr 60px 72px 60px 100px",
             alignItems: "center", padding: "10px 16px", gap: 12,
-            background: rowHov || isExpanded ? "var(--bg-2)" : "transparent",
+            background: isExpanded ? "var(--bg-2)" : rowHov ? "var(--surface)" : "transparent",
             borderBottom: isExpanded ? "none" : "1px solid var(--hairline)",
-            cursor: "pointer", transition: "background 0.13s" }}>
+            cursor: "pointer", transition: "background 0.13s",
+            boxShadow: rowHov && !isExpanded ? "inset 0 0 0 1px var(--hairline)" : "none" }}>
 
           {/* Subject name */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <div style={{ width: 4, height: 32, borderRadius: 2, background: s.color, flexShrink: 0 }} />
+            <div style={{ width: 3, height: 32, borderRadius: 2, background: s.color, flexShrink: 0 }} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 14.5, color: "var(--ink)", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
@@ -1304,8 +1818,13 @@ function GradesContent() {
           </div>
 
           {/* Sparkline */}
-          <div style={{ display: "flex", justifyContent: "flex-start" }}>
-            <GradeSparkline data={sparkData} color={s.color} />
+          <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: 22 }}>
+            {sparkData.length >= 2
+              ? <GradeSparkline data={sparkData} color={s.color} />
+              : <svg width="52" height="22" style={{ display: "block" }}>
+                  <line x1="4" y1="11" x2="48" y2="11" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" opacity="0.10" />
+                </svg>
+            }
           </div>
 
           {/* Score % */}
@@ -1328,17 +1847,22 @@ function GradesContent() {
                 {toLetterGrade(avg)}
               </span>
             ) : (
-              <span style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)",
-                background: "var(--bg-2)", padding: "3px 8px", borderRadius: 5, border: "1px solid var(--hairline)" }}>no data</span>
+              <span style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: s.color,
+                background: s.color + "28", padding: "3px 9px", borderRadius: 5, border: "1px solid " + s.color + "55",
+                whiteSpace: "nowrap", display: "inline-block", letterSpacing: "0.03em" }}>
+                {rowHov ? "log →" : "—"}
+              </span>
             )}
           </div>
 
-          {/* Target */}
+          {/* Target / hover CTA */}
           <div style={{ textAlign: "right" }}>
-            {target ? (
+            {avg === null && rowHov ? (
+              <span style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink)", fontWeight: 500, letterSpacing: "0.02em" }}>Log grade →</span>
+            ) : target ? (
               <span style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: target.color }}>{target.label}</span>
             ) : avg === null ? (
-              <span style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", opacity: 0.5 }}>log a grade</span>
+              <span style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", opacity: 0.45 }}>first grade unlocks</span>
             ) : null}
           </div>
         </div>
@@ -1372,11 +1896,11 @@ function GradesContent() {
                   <option value="hw">Homework</option>
                   <option value="other">Other</option>
                 </select>
-                <button className="sn-btn accent" onClick={() => addEntry(s.id)} style={{ fontSize: 12 }}>Save</button>
-                <button className="sn-btn ghost" onClick={() => setAddingFor(null)} style={{ fontSize: 12 }}>Cancel</button>
+                <button className="sn-btn accent" onClick={addEntry} style={{ fontSize: 12 }}>Save</button>
+                <button className="sn-btn ghost" onClick={() => setIsAdding(false)} style={{ fontSize: 12 }}>Cancel</button>
               </div>
             ) : (
-              <button className="sn-btn ghost" onClick={ev => { ev.stopPropagation(); setAddingFor(s.id); }}
+              <button className="sn-btn ghost" onClick={ev => { ev.stopPropagation(); setIsAdding(true); }}
                 style={{ marginTop: es.length > 0 ? 8 : 4, fontSize: 12, padding: "4px 10px" }}>+ Add grade</button>
             )}
           </div>
@@ -1388,7 +1912,7 @@ function GradesContent() {
   // Sidebar panel shell
   function SidePanel({ title, badge, dot, children }) {
     return (
-      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
+      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", marginBottom: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "10px 14px", borderBottom: "1px solid var(--hairline)", background: "var(--bg-2)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -1402,11 +1926,127 @@ function GradesContent() {
     );
   }
 
+  // Grade Targets panel
+  function GradeTargetsPanel() {
+    const letterOptions = ["A+","A","A−","B+","B","B−","C+","C"];
+    return (
+      <SidePanel title="Grade Targets" dot="var(--info)">
+        <div style={{ paddingTop: 2, paddingBottom: 2 }}>
+          {SUBJECTS.length === 0 ? (
+            <div style={{ padding: "12px 14px", fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 12.5, color: "var(--ink-3)" }}>
+              Add subjects to set targets.
+            </div>
+          ) : SUBJECTS.map((s, i) => (
+            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
+              borderBottom: i < SUBJECTS.length - 1 ? "1px solid var(--hairline)" : "none" }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: s.color, flexShrink: 0 }} />
+              <div style={{ flex: 1, fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 12.5, color: "var(--ink)",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+              <select value={gradeTargets[s.id] || ""} onChange={e => setGradeTarget(s.id, e.target.value)}
+                style={{ fontFamily: gradeTargets[s.id] ? "var(--f-display)" : "var(--f-mono)",
+                  fontStyle: gradeTargets[s.id] ? "italic" : "normal",
+                  fontSize: gradeTargets[s.id] ? 14 : 9.5, padding: "3px 7px",
+                  border: "1px solid " + (gradeTargets[s.id] ? "var(--hairline)" : "var(--hairline)"),
+                  borderRadius: 5, background: gradeTargets[s.id] ? "var(--bg-2)" : "var(--surface)",
+                  color: gradeTargets[s.id] ? "var(--ink)" : "var(--ink-3)",
+                  cursor: "pointer", minWidth: 54 }}>
+                <option value="">Set →</option>
+                {letterOptions.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+      </SidePanel>
+    );
+  }
+
+  // Grade Insights AI panel
+  function GradeInsightsPanel() {
+    const storageKey = "nb-grade-insights-v1";
+    const stored = (() => { try { return JSON.parse(localStorage.getItem(storageKey) || "null"); } catch { return null; } })();
+    const weekStamp = Math.floor(Date.now() / (7 * 24 * 3600 * 1000));
+    const [insight, setInsight] = React.useState(stored && stored.week === weekStamp ? stored.text : null);
+    const [loading, setLoading] = React.useState(false);
+    const [err, setErr] = React.useState(null);
+
+    const generateInsight = async () => {
+      if (!graded.length) return;
+      setLoading(true); setErr(null);
+      const summary = graded.map(s => {
+        const trend = trendFor(s.entries);
+        const tDir = trend ? (trend.dir === "up" ? "improving" : trend.dir === "down" ? "declining" : "stable") : "stable";
+        return `${s.name}: ${Math.round(s.avg * 100)}% avg (${toLetterGrade(s.avg)}), ${s.entries.length} assignments, trend ${tDir}`;
+      }).join("\n");
+      const prompt = `You are a school performance coach. A student has these grades this term:\n\n${summary}\n\nWrite ONE specific, encouraging observation (1–2 sentences max) about their grade trends — something like "Your Bio grade has trended up 4 points over 3 assignments" or "AP Lit is your most consistent subject this term." Be specific, use the actual subject names and numbers. No fluff, no greeting, just the observation.`;
+      try {
+        const text = await aiComplete(prompt);
+        const clean = (text || "").trim();
+        setInsight(clean);
+        try { localStorage.setItem(storageKey, JSON.stringify({ week: weekStamp, text: clean })); } catch {}
+      } catch(e) {
+        if (e.message === "no-key") setErr("no-key");
+        else setErr("Could not generate insight.");
+      } finally { setLoading(false); }
+    };
+
+    React.useEffect(() => {
+      if (graded.length && !insight && !loading && !err) generateInsight();
+    }, [graded.length]);
+
+    return (
+      <SidePanel title="Grade Insights" dot="var(--done)" badge="AI">
+        <div style={{ padding: "12px 14px" }}>
+          {!graded.length ? (
+            <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.5 }}>
+              Insights appear once you log your first grade.
+            </div>
+          ) : loading ? (
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>Analysing grades…</div>
+          ) : err === "no-key" ? (
+            <div>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)", marginBottom: 8 }}>Connect AI to generate insights.</div>
+              <button className="sn-btn ghost" style={{ fontSize: 10.5, padding: "4px 10px" }}
+                onClick={() => window.dispatchEvent(new Event("openApiKeyModal"))}>✦ Connect AI</button>
+            </div>
+          ) : err ? (
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>{err}</div>
+          ) : insight ? (
+            <div>
+              <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink)", lineHeight: 1.55, marginBottom: 10 }}>{insight}</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Updated this week</span>
+                <button onClick={generateInsight} style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, padding: "2px 8px", borderRadius: 4,
+                  border: "1px solid var(--hairline)", background: "transparent", color: "var(--ink-3)", cursor: "pointer" }}>↻ Refresh</button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </SidePanel>
+    );
+  }
+
   // Recent scores feed
   function RecentScoresFeed() {
     if (!allEntries.length) return (
-      <SidePanel title="Recent Scores" dot="var(--accent)">
-        <div style={{ padding: "14px", fontFamily: "var(--f-mono)", fontSize: 11, color: "var(--ink-3)", textAlign: "center" }}>No grades logged yet.</div>
+      <SidePanel title="Recent Scores" dot="var(--ink-3)">
+        <div style={{ padding: "24px 16px 20px", textAlign: "center" }}>
+          <div style={{ fontSize: 28, marginBottom: 10, opacity: 0.3 }}>📋</div>
+          <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 15, color: "var(--ink-2)", marginBottom: 6, lineHeight: 1.3 }}>
+            Your latest grades<br />appear here.
+          </div>
+          <div style={{ fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            Log a grade to begin
+          </div>
+          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 6 }}>
+            {[0.72, 0.55, 0.42].map((w, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, opacity: 0.18 }}>
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--rule)", flexShrink: 0 }} />
+                <div style={{ flex: 1, height: 7, background: "var(--rule)", borderRadius: 3, width: (w * 100) + "%" }} />
+                <div style={{ height: 10, background: "var(--rule)", borderRadius: 3, width: 24, flexShrink: 0 }} />
+              </div>
+            ))}
+          </div>
+        </div>
       </SidePanel>
     );
     return (
@@ -1527,6 +2167,7 @@ function GradesContent() {
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <>
+      {pdfModal && <PdfImportModal />}
       <PageHeader
         eyebrow={termEyebrow}
         title="Academic"
@@ -1534,7 +2175,12 @@ function GradesContent() {
         meta={gpa !== null
           ? "GPA " + gpa.toFixed(2) + " · " + graded.length + " subject" + (graded.length !== 1 ? "s" : "") + " · " + totalEntries + " grades logged"
           : SUBJECTS.length > 0 ? "Click any subject to log your first grade." : "Add subjects first, then track grades here."}
-        actions={<button className="sn-btn ghost" onClick={exportCSV}>Export CSV</button>}
+        actions={<div style={{ display: "flex", gap: 8 }}>
+          <button className="sn-btn ghost" onClick={openPdfModal} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ fontSize: 13 }}>📄</span> Import Grades PDF
+          </button>
+          <button className="sn-btn ghost" onClick={exportCSV}>Export CSV</button>
+        </div>}
       />
 
       {SUBJECTS.length === 0 ? (
@@ -1545,12 +2191,13 @@ function GradesContent() {
       ) : (
         <>
           {/* Metrics strip */}
-          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: gpaExpanded ? "1fr" : "auto 1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
             <GpaCard />
+            {!gpaExpanded && <>
             <MetricCard
               label="Best Performing"
               value={best ? best.name : "—"}
-              sub={best ? Math.round(best.avg * 100) + "% · " + toLetterGrade(best.avg) : "No grades yet"}
+              sub={best ? Math.round(best.avg * 100) + "% · " + toLetterGrade(best.avg) : "Log a grade to see"}
               subColor={best ? "var(--done)" : undefined}
               accent={best ? best.color : undefined}
             />
@@ -1559,21 +2206,22 @@ function GradesContent() {
               value={worst ? worst.name : (graded.length === 1 ? "Only 1 graded" : "—")}
               sub={worst ? Math.round(worst.avg * 100) + "% · " + toLetterGrade(worst.avg) : "Log more grades"}
               subColor={worst ? gradeColor(worst.avg) : undefined}
-              accent={worst ? gradeColor(worst.avg) : undefined}
+              accent={worst ? (worst.color || gradeColor(worst.avg)) : undefined}
             />
             <MetricCard
               label="Total Assignments"
               value={totalEntries > 0 ? String(totalEntries) : "0"}
-              sub={totalEntries > 0 ? graded.length + " subjects tracked" : "Click a subject to start"}
+              sub={totalEntries > 0 ? graded.length + " subject" + (graded.length !== 1 ? "s" : "") + " tracked" : "Click a subject to start"}
               subColor={totalEntries > 0 ? "var(--info)" : undefined}
             />
+            </>}
           </div>
 
           {/* Main: subject table + sidebar */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 256px", gap: 16, alignItems: "start" }}>
 
             {/* Subject table */}
-            <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden" }}>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
               {/* Column headers */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 72px 60px 100px",
                 padding: "8px 16px", borderBottom: "1px solid var(--hairline)", gap: 12, background: "var(--bg-2)" }}>
@@ -1583,6 +2231,12 @@ function GradesContent() {
                 ))}
               </div>
               {subjectsWithStats.map(s => <SubjectRow key={s.id} s={s} />)}
+              <div style={{ padding: "10px 16px", borderTop: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-3)", opacity: 0.6 }}>
+                  {subjectsWithStats.length} subject{subjectsWithStats.length !== 1 ? "s" : ""} · click any row to log a grade
+                </span>
+                <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: "var(--ink-3)", opacity: 0.45 }}>↑ scroll to top</span>
+              </div>
             </div>
 
             {/* Sidebar */}
@@ -1590,6 +2244,8 @@ function GradesContent() {
               <RecentScoresFeed />
               <GradeForecast />
               <AssignmentImpact />
+              <GradeTargetsPanel />
+              <GradeInsightsPanel />
             </div>
           </div>
         </>
@@ -1953,19 +2609,27 @@ function FlashcardsContent({ onTakeQuiz }) {
   // Metrics strip
   function MetricsStrip() {
     const items = [
-      { label: "Due today",   value: totalDue || "0",         sub: totalDue > 0 ? decksWithDue.length + " deck" + (decksWithDue.length !== 1 ? "s" : "") : "All caught up", subColor: totalDue > 0 ? "var(--ochre)" : "var(--done)", accent: totalDue > 0 },
-      { label: "Retention",   value: retention !== null ? retention + "%" : "—",  sub: retention !== null ? (retention >= 80 ? "Strong mastery" : retention >= 60 ? "Improving" : "Needs review") : "Start studying", subColor: retention && retention >= 80 ? "var(--done)" : "var(--ink-3)" },
+      { label: "Due today",   value: totalDue || "0",         sub: totalDue > 0 ? decksWithDue.length + " deck" + (decksWithDue.length !== 1 ? "s" : "") : "All caught up", subColor: totalDue > 0 ? "var(--ochre)" : "var(--done)", accent: totalDue > 0, hero: true },
+      { label: "Retention",   value: retention !== null ? retention + "%" : "—",  sub: retention !== null ? (retention >= 80 ? "Strong mastery" : retention >= 60 ? "Improving" : "Needs review") : "Start studying", subColor: retention && retention >= 80 ? "var(--done)" : "var(--ink-3)", retentionLow: retention !== null && retention < 60 },
       { label: "Study streak",value: streakData.streak > 0 ? streakData.streak + "d" : "—", sub: streakData.best > 0 ? "Best " + streakData.best + "d" : "Start today", subColor: streakData.streak > 0 ? "var(--ochre)" : "var(--ink-3)" },
       { label: "Est. review", value: timeLabel,               sub: totalDue > 0 ? totalDue + " cards queued" : "Nothing due", subColor: "var(--ink-3)" },
     ];
+    const mostOverdueDeck = decksWithDue[0];
     return (
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 16 }}>
         {items.map((s, i) => (
           <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, padding: "13px 15px",
             borderTop: s.accent ? "2px solid var(--ochre)" : undefined }}>
             <div style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-3)", marginBottom: 7 }}>{s.label}</div>
-            <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 22, lineHeight: 1, color: s.accent ? "var(--ochre)" : "var(--ink)", marginBottom: 5 }}>{s.value}</div>
+            <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: s.hero ? 36 : 22, lineHeight: 1, color: s.accent ? "var(--ochre)" : "var(--ink)", marginBottom: 5 }}>{s.value}</div>
             <div style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, color: s.subColor }}>{s.sub}</div>
+            {s.retentionLow && mostOverdueDeck && (
+              <button onClick={() => studyDeck(mostOverdueDeck)}
+                style={{ marginTop: 7, fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-2)", background: "none",
+                  border: "none", padding: 0, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>
+                Review overdue cards →
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -2000,12 +2664,15 @@ function FlashcardsContent({ onTakeQuiz }) {
           </div>
         ) : (
           <>
-            {decksWithDue.slice(0, 5).map((d, i) => {
+            {(() => {
+              const slice = decksWithDue.slice(0, 5);
+              const maxDue = Math.max(...slice.map(d => d.due || 0), 1);
+              return slice.map((d, i) => {
               const s = subjectBy(d.subject);
               const isHov = hov === d.id;
               const cardsDue = d.due || 0;
               const cardsTotal = d.cards ? d.cards.length : 0;
-              const masteryPct = cardsTotal > 0 ? Math.round(((cardsTotal - cardsDue) / cardsTotal) * 100) : 0;
+              const duePct = Math.round((cardsDue / maxDue) * 100);
               return (
                 <div key={d.id}
                   onMouseEnter={() => setHov(d.id)} onMouseLeave={() => setHov(null)}
@@ -2022,7 +2689,7 @@ function FlashcardsContent({ onTakeQuiz }) {
                         color: "var(--ink-3)", background: "var(--bg-2)", border: "1px solid var(--hairline)", padding: "1px 5px", borderRadius: 3 }}>{s.short}</span>
                     </div>
                     <div style={{ height: 3, background: "var(--hairline)", borderRadius: 1.5 }}>
-                      <div style={{ height: 3, width: masteryPct + "%", background: dueColor(cardsDue, cardsTotal), borderRadius: 1.5, transition: "width 0.4s" }} />
+                      <div style={{ height: 3, width: duePct + "%", background: dueColor(cardsDue, cardsTotal), borderRadius: 1.5, transition: "width 0.4s" }} />
                     </div>
                   </div>
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -2033,7 +2700,8 @@ function FlashcardsContent({ onTakeQuiz }) {
                     transition: "color 0.13s", whiteSpace: "nowrap" }}>Study →</div>
                 </div>
               );
-            })}
+            });
+            })()}
             {decksWithDue.length > 5 && (
               <div style={{ padding: "8px 16px", fontFamily: "var(--f-mono)", fontSize: 9, color: "var(--ink-3)",
                 borderTop: "1px solid var(--hairline)" }}>+{decksWithDue.length - 5} more decks with due cards</div>
@@ -2057,7 +2725,7 @@ function FlashcardsContent({ onTakeQuiz }) {
       <div
         onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
         onClick={() => studyDeck(d)}
-        style={{ display: "grid", gridTemplateColumns: "1fr 60px 64px 70px 64px",
+        style={{ display: "grid", gridTemplateColumns: "1fr 100px 60px 64px 70px 64px",
           alignItems: "center", padding: "11px 16px", gap: 12,
           background: hov ? "var(--bg-2)" : "transparent",
           borderBottom: isLast ? "none" : "1px solid var(--hairline)",
@@ -2074,13 +2742,15 @@ function FlashcardsContent({ onTakeQuiz }) {
                 {d.source === "ai" ? "AI" : d.source === "quizlet" ? "Quizlet" : "Custom"}
               </span>}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ height: 3, width: 80, background: "var(--hairline)", borderRadius: 1.5 }}>
-                <div style={{ height: 3, width: masteryPct + "%", background: dueColor(cardsDue, cardsTotal), borderRadius: 1.5, transition: "width 0.4s" }} />
-              </div>
-              <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: "var(--ink-3)" }}>{masteryPct}% mastered</span>
-            </div>
           </div>
+        </div>
+
+        {/* Mastery bar */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <div style={{ flex: 1, height: 3, background: "var(--hairline)", borderRadius: 1.5 }}>
+            <div style={{ height: 3, width: masteryPct + "%", background: dueColor(cardsDue, cardsTotal), borderRadius: 1.5, transition: "width 0.4s" }} />
+          </div>
+          <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ink-3)", flexShrink: 0 }}>{masteryPct}%</span>
         </div>
 
         {/* Cards count */}
@@ -2106,7 +2776,7 @@ function FlashcardsContent({ onTakeQuiz }) {
         {/* Action */}
         <div style={{ textAlign: "right" }}>
           <span style={{ fontFamily: "var(--f-mono)", fontSize: 9.5,
-            color: hov ? "var(--accent)" : "var(--ink-3)", transition: "color 0.13s" }}>
+            color: hov ? "var(--ink)" : "var(--ink-3)", transition: "color 0.13s", fontWeight: hov ? 500 : 400 }}>
             {cardsDue > 0 ? "Review →" : "Study →"}
           </span>
         </div>
@@ -2116,13 +2786,13 @@ function FlashcardsContent({ onTakeQuiz }) {
 
   // Deck table
   function AllDecksTable() {
-    const COL_HDR = "1fr 60px 64px 70px 64px";
+    const COL_HDR = "1fr 100px 60px 64px 70px 64px";
     if (allDecks.length === 0) return null;
     return (
       <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden" }}>
         <div style={{ display: "grid", gridTemplateColumns: COL_HDR, padding: "8px 16px",
           borderBottom: "1px solid var(--hairline)", gap: 12, background: "var(--bg-2)" }}>
-          {[["Deck","left"],["Cards","right"],["Due","right"],["Last","right"],["","right"]].map(([h,a]) => (
+          {[["Deck","left"],["Mastery","left"],["Cards","right"],["Due","right"],["Last","right"],["Study","right"]].map(([h,a]) => (
             <div key={h} style={{ fontFamily: "var(--f-mono)", fontSize: 7.5, textTransform: "uppercase",
               letterSpacing: "0.1em", color: "var(--ink-3)", textAlign: a }}>{h}</div>
           ))}
@@ -2135,7 +2805,7 @@ function FlashcardsContent({ onTakeQuiz }) {
   // ── Sidebar panels ───────────────────────────────────────────────────────────
   function SidePanel({ title, badge, dot, children }) {
     return (
-      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
+      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", marginBottom: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "10px 14px", borderBottom: "1px solid var(--hairline)", background: "var(--bg-2)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -2236,13 +2906,78 @@ function FlashcardsContent({ onTakeQuiz }) {
     );
   }
 
+  // AI Study Recommendation panel
+  function StudyRecommendationPanel() {
+    const storageKey = "nb-fc-rec-v1";
+    const stored = (() => { try { return JSON.parse(localStorage.getItem(storageKey) || "null"); } catch { return null; } })();
+    const weekStamp = Math.floor(Date.now() / (7 * 24 * 3600 * 1000));
+    const [rec, setRec] = React.useState(stored && stored.week === weekStamp ? stored.text : null);
+    const [loading, setLoading] = React.useState(false);
+    const [err, setErr] = React.useState(null);
+
+    const generate = async () => {
+      if (!allDecks.length) return;
+      setLoading(true); setErr(null);
+      const summary = decksWithDue.slice(0, 6).map(d => {
+        const s = subjectBy(d.subject);
+        const total = d.cards ? d.cards.length : 0;
+        const ret = total > 0 ? Math.round(((total - (d.due || 0)) / total) * 100) : 0;
+        return `${d.title} (${s ? s.short : "?"}): ${d.due || 0} cards due, ${ret}% retention`;
+      }).join("\n");
+      const prompt = `A student has these flashcard decks due for review:\n\n${summary}\n\nWrite ONE short prioritized study recommendation (1 sentence max). Be specific — name the deck and give a reason based on the numbers. Example: "Start with Vocab Unidad 6 — 12 cards due, retention dropping." No greeting, no fluff, just the recommendation.`;
+      try {
+        const text = await aiComplete(prompt);
+        const clean = (text || "").trim();
+        setRec(clean);
+        try { localStorage.setItem(storageKey, JSON.stringify({ week: weekStamp, text: clean })); } catch {}
+      } catch(e) {
+        if (e.message === "no-key") setErr("no-key");
+        else setErr("Could not generate recommendation.");
+      } finally { setLoading(false); }
+    };
+
+    React.useEffect(() => {
+      if (allDecks.length && !rec && !loading && !err) generate();
+    }, [allDecks.length]);
+
+    return (
+      <SidePanel title="Study Recommendation" dot="var(--done)" badge="AI">
+        <div style={{ padding: "12px 14px" }}>
+          {!allDecks.length || !decksWithDue.length ? (
+            <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.5 }}>
+              Complete a session to get your first recommendation.
+            </div>
+          ) : loading ? (
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>Analysing decks…</div>
+          ) : err === "no-key" ? (
+            <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.5 }}>
+              Complete a session to get your first recommendation.
+            </div>
+          ) : err ? (
+            <div style={{ fontFamily: "var(--f-mono)", fontSize: 10, color: "var(--ink-3)" }}>{err}</div>
+          ) : rec ? (
+            <div>
+              <div style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink)", lineHeight: 1.55, marginBottom: 10 }}>{rec}</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Updated this week</span>
+                <button onClick={generate} style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, padding: "2px 8px", borderRadius: 4,
+                  border: "1px solid var(--hairline)", background: "transparent", color: "var(--ink-3)", cursor: "pointer" }}>↻ Refresh</button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </SidePanel>
+    );
+  }
+
   // Quick actions + create
   function QuickActionsPanel() {
     return (
       <SidePanel title="Create & Import">
         <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
           <button className="sn-btn primary" onClick={() => setCreateOpen(true)}
-            style={{ fontSize: 12, justifyContent: "flex-start", display: "flex", alignItems: "center", gap: 8 }}>
+            style={{ fontSize: 12, justifyContent: "flex-start", display: "flex", alignItems: "center", gap: 8,
+              border: "1px solid var(--ink-2)", boxShadow: "0 0 0 1px var(--hairline)" }}>
             <span style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 14 }}>✦</span>
             <span>Generate with AI</span>
           </button>
@@ -2254,9 +2989,6 @@ function FlashcardsContent({ onTakeQuiz }) {
             style={{ fontSize: 12, justifyContent: "flex-start", display: "flex", alignItems: "center", gap: 8 }}>
             <span>↓ Import from Quizlet</span>
           </button>
-        </div>
-        <div style={{ padding: "0 14px 12px", fontFamily: "var(--f-mono)", fontSize: 9.5, color: "var(--ink-3)", lineHeight: 1.5 }}>
-          AI generation creates cards from a topic prompt using your connected AI key.
         </div>
       </SidePanel>
     );
@@ -2317,6 +3049,7 @@ function FlashcardsContent({ onTakeQuiz }) {
             <div>
               <ActivityFeed />
               <SubjectFocusPanel />
+              <StudyRecommendationPanel />
               <QuickActionsPanel />
             </div>
           </div>
@@ -2410,7 +3143,7 @@ function NotesIndexContent({ onOpenSubject, onOpenNote }) {
   // Sidebar panel shell
   function SidePanel({ title, badge, dot, children }) {
     return (
-      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
+      <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", marginBottom: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "10px 14px", borderBottom: "1px solid var(--hairline)", background: "var(--bg-2)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>

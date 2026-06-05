@@ -10,9 +10,9 @@
   --ink-3: #9a9082;
   --hairline: #e7e0d2;
   --rule: #d8cfbe;
-  --accent: #a07830;          /* deep ochre */
-  --accent-ink: #604a18;
-  --accent-soft: #f0e8d5;
+  --accent: #ffffff;          /* white */
+  --accent-ink: #1a1611;
+  --accent-soft: #f0f0f0;
   --highlight: #fae8a8;       /* margin note yellow */
   --done: #6b8e5a;            /* sage */
   --done-soft: #dce6cf;
@@ -215,7 +215,7 @@ body, html { margin: 0; padding: 0; }
 .sn-pageheader { margin-bottom: 22px; display: flex; align-items: flex-end; gap: 24px; }
 .sn-pageheader .titleblock { flex: 1; min-width: 0; }
 .sn-pageheader .eyebrow {
-  font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-3);
+  font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-2);
   text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px;
 }
 .sn-pageheader h1 {
