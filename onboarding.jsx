@@ -424,9 +424,9 @@ function Onboarding({ onComplete }) {
       {/* Top bar */}
       <div className="mono" style={{
         textAlign: "center", padding: "18px 0",
-        fontSize: 11, letterSpacing: "0.26em", color: "var(--ink-3)",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        background: "#141412", flexShrink: 0,
+        fontSize: 11, letterSpacing: "0.26em", color: "#9898a4",
+        borderBottom: "1px solid #3a3a3e",
+        background: "#2b2b2d", flexShrink: 0,
       }}>
         — SETTING UP YOUR NOTEBOOK —
       </div>
@@ -477,7 +477,7 @@ function Onboarding({ onComplete }) {
         <div style={{
           flex: 1, minWidth: 0,
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          gap: 20, padding: "40px 32px",
+          gap: 20, padding: "0 32px",
           borderRight: "1px solid rgba(255,255,255,0.08)",
           background: "#161618",
         }}>
@@ -629,9 +629,9 @@ function Onboarding({ onComplete }) {
       {/* Footer */}
       <div className="mono" style={{
         textAlign: "center", padding: "16px 0", flexShrink: 0,
-        fontSize: 10, letterSpacing: "0.22em", color: "var(--ink-3)",
-        borderTop: "1px solid rgba(255,255,255,0.08)",
-        background: "#141412",
+        fontSize: 10, letterSpacing: "0.22em", color: "#585862",
+        borderTop: "1px solid #3a3a3e",
+        background: "#2b2b2d",
       }}>
         ANNO MMXXVI · PRINTED FOR ONE READER
       </div>
