@@ -622,16 +622,17 @@ body, html { margin: 0; padding: 0; }
    ═══════════════════════════════════════════════════════ */
 
 :root {
-  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Expo-out easing — starts fast, decelerates elegantly. Used by Linear, Arc, Apple. */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.15, 1);
 
-  --dur-micro:  180ms;
-  --dur-hover:  180ms;
-  --dur-ui:     240ms;
-  --dur-page:   380ms;
-  --dur-modal:  300ms;
-  --dur-layout: 420ms;
-  --dur-bar:    900ms;
+  --dur-micro:  220ms;
+  --dur-hover:  220ms;
+  --dur-ui:     320ms;
+  --dur-page:   600ms;
+  --dur-modal:  420ms;
+  --dur-layout: 550ms;
+  --dur-bar:    1100ms;
 }
 
 /* ── Reduced motion — respect user preference ── */
@@ -644,9 +645,9 @@ body, html { margin: 0; padding: 0; }
   }
 }
 
-/* ── Page entrance — fade up from 10px ── */
+/* ── Page entrance — fade up from 16px ── */
 @keyframes sn-page-enter {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: none; }
 }
 .sn-page-enter {
@@ -660,19 +661,19 @@ body, html { margin: 0; padding: 0; }
   to   { opacity: 1; }
 }
 .sn-page-enter > * {
-  animation: sn-fade-in 320ms var(--ease-out) both;
-  animation-delay: 30ms;  /* base: start after wrapper begins */
+  animation: sn-fade-in 500ms var(--ease-out) both;
+  animation-delay: 60ms;
 }
-.sn-page-enter > *:nth-child(2) { animation-delay:  90ms; }
-.sn-page-enter > *:nth-child(3) { animation-delay: 150ms; }
-.sn-page-enter > *:nth-child(4) { animation-delay: 210ms; }
-.sn-page-enter > *:nth-child(5) { animation-delay: 260ms; }
-.sn-page-enter > *:nth-child(6) { animation-delay: 300ms; }
-.sn-page-enter > *:nth-child(n+7) { animation-delay: 330ms; }
+.sn-page-enter > *:nth-child(2)  { animation-delay: 160ms; }
+.sn-page-enter > *:nth-child(3)  { animation-delay: 260ms; }
+.sn-page-enter > *:nth-child(4)  { animation-delay: 340ms; }
+.sn-page-enter > *:nth-child(5)  { animation-delay: 410ms; }
+.sn-page-enter > *:nth-child(6)  { animation-delay: 470ms; }
+.sn-page-enter > *:nth-child(n+7){ animation-delay: 520ms; }
 
 /* ── Card stagger entrance ── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: none; }
 }
 
@@ -700,7 +701,7 @@ body, html { margin: 0; padding: 0; }
 }
 .sn-bar-fill {
   animation: sn-bar-grow var(--dur-bar) var(--ease-out) both;
-  animation-delay: 180ms;
+  animation-delay: 300ms;
 }
 
 /* ── AI insight / slide-in from left ── */

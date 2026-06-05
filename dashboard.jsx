@@ -473,8 +473,8 @@ function DashHeaderWidget({ variant, allHW, allQuizzes, sched }) {
             paddingLeft: i > 0 ? 28 : 0,
             borderLeft: i > 0 ? "1px solid var(--hairline)" : "none",
             marginLeft: i > 0 ? 28 : 0,
-            animation: "count-in .4s ease both",
-            animationDelay: (i * 0.09) + "s",
+            animation: "count-in .6s cubic-bezier(0.16,1,0.3,1) both",
+            animationDelay: (i * 0.12) + "s",
           }}>
             <div style={{ fontFamily: "var(--f-display)", fontSize: 42, lineHeight: 1, color: "var(--ink)", letterSpacing: "-0.025em" }}>
               {s.prefix && <span style={{ fontSize: 15, color: "var(--accent)", marginRight: 4, fontStyle: "italic" }}>{s.prefix}</span>}
