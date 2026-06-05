@@ -151,40 +151,40 @@ function Onboarding({ onComplete }) {
   // Notebook preview card — reflects current input state
   const PreviewCard = () => (
     <div style={{
-      width: 310, background: "#1e1d1b", border: "1px solid rgba(255,255,255,0.11)",
-      borderRadius: 6, padding: "32px 28px 26px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+      width: 320, background: "#252527", border: "1px solid rgba(255,255,255,0.13)",
+      borderRadius: 8, padding: "36px 32px 30px", boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
       display: "flex", flexDirection: "column",
     }}>
-      <div className="mono" style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(255,255,255,0.38)", marginBottom: 14 }}>ACADEMIC NOTEBOOK</div>
-      <div style={{ fontFamily: "var(--f-display)", fontSize: 40, lineHeight: 1.1, color: "#e8e4dc", fontWeight: 400, fontStyle: "italic", marginBottom: 20 }}>
+      <div className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--ink-3)", marginBottom: 18 }}>ACADEMIC NOTEBOOK</div>
+      <div style={{ fontFamily: "var(--f-display)", fontSize: 44, lineHeight: 1.08, color: "var(--ink)", fontWeight: 400, fontStyle: "italic", marginBottom: 24 }}>
         {name.trim() ? name.trim() + "'s" : "Julian's"}<br />Notebook
       </div>
-      <div style={{ height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 20 }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 24 }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {[
           ["READER",   name.trim() || "Julian"],
           ["YEAR",     grade ? grade.charAt(0).toUpperCase() + grade.slice(1) : "—"],
           ["SCHOOL",   step > 1 && school.trim() ? school.trim() : (step > 1 ? "—" : "next step")],
           ["SUBJECTS", step > 2 ? (validSubjects.length + " added") : "step " + toRoman(3)],
         ].map(([k, v]) => (
-          <div key={k} style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
-            <span className="mono" style={{ fontSize: 8.5, letterSpacing: "0.12em", color: "rgba(255,255,255,0.3)", width: 64, flexShrink: 0 }}>{k}</span>
-            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.62)", fontFamily: "var(--f-display)", fontStyle: "italic" }}>{v}</span>
+          <div key={k} style={{ display: "flex", gap: 16, alignItems: "baseline" }}>
+            <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "var(--ink-3)", width: 72, flexShrink: 0 }}>{k}</span>
+            <span style={{ fontSize: 15, color: "var(--ink-2)", fontFamily: "var(--f-display)", fontStyle: "italic" }}>{v}</span>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 24, display: "flex", justifyContent: "center" }}>
+      <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
         <div style={{ display: "flex", gap: 6 }}>
           {[1,2,3].map(s => (
             <div key={s} style={{
-              width: s === step ? 24 : 6, height: 2, borderRadius: 1,
-              background: s === step ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.15)",
+              width: s === step ? 28 : 7, height: 2, borderRadius: 1,
+              background: s === step ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)",
               transition: "width 0.3s, background 0.3s",
             }} />
           ))}
         </div>
       </div>
-      <div className="mono" style={{ textAlign: "center", fontSize: 8, letterSpacing: "0.12em", color: "rgba(255,255,255,0.22)", marginTop: 12 }}>
+      <div className="mono" style={{ textAlign: "center", fontSize: 9, letterSpacing: "0.12em", color: "var(--ink-3)", marginTop: 12 }}>
         STEP {step} OF 3
       </div>
     </div>
@@ -192,10 +192,20 @@ function Onboarding({ onComplete }) {
 
   // Shared nav row used in steps 1-3
   const NavRow = ({ canProceed, onBack, onNext, nextLabel = "Next →" }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 40 }}>
-      <button onClick={onBack} style={{ ...oGhostBtn, fontSize: 15, padding: "13px 22px", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.2)" }}>← Back</button>
-      <button onClick={onNext} disabled={!canProceed}
-        style={{ ...oPrimaryBtn, fontSize: 15, padding: "13px 28px", opacity: canProceed ? 1 : 0.28 }}>{nextLabel}</button>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 36, gap: 12 }}>
+      <button onClick={onBack} style={{
+        height: 48, padding: "0 24px", borderRadius: 6, cursor: "pointer",
+        border: "1px solid rgba(255,255,255,0.22)", background: "transparent",
+        color: "rgba(255,255,255,0.65)", fontFamily: "inherit", fontSize: 15,
+        transition: "border-color 0.15s, color 0.15s",
+      }}>← Back</button>
+      <button onClick={onNext} disabled={!canProceed} style={{
+        height: 48, padding: "0 28px", borderRadius: 6, cursor: canProceed ? "pointer" : "default",
+        border: "none", background: canProceed ? "#f0ece4" : "rgba(255,255,255,0.12)",
+        color: canProceed ? "#141310" : "rgba(255,255,255,0.3)",
+        fontFamily: "inherit", fontSize: 15, fontWeight: 600,
+        transition: "background 0.15s, color 0.15s",
+      }}>{nextLabel}</button>
     </div>
   );
 
@@ -396,93 +406,101 @@ function Onboarding({ onComplete }) {
   }
 
   // ── Steps 1–3: editorial 3-column layout ──
-  // Shared styles for the dark form panel
-  const bigDarkInput = {
-    width: "100%", padding: "13px 16px",
-    border: "1px solid rgba(255,255,255,0.18)", borderRadius: 6,
-    fontFamily: "inherit", fontSize: 16, color: "#f0ece4",
-    background: "rgba(255,255,255,0.07)", outline: "none",
-    boxSizing: "border-box",
+  const darkInput = {
+    width: "100%", height: 48, padding: "0 16px", boxSizing: "border-box",
+    border: "1px solid #3a3a3e", borderRadius: 6,
+    fontFamily: "inherit", fontSize: 15, color: "var(--ink)",
+    background: "rgba(255,255,255,0.05)", outline: "none",
   };
 
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 500,
-      background: "#141310",
+      background: "#141412",
       display: "flex", flexDirection: "column",
       fontFamily: "var(--f-ui, Geist, sans-serif)",
+      fontSize: 16,
     }}>
       {/* Top bar */}
       <div className="mono" style={{
-        textAlign: "center", padding: "20px 0",
-        fontSize: 11, letterSpacing: "0.24em", color: "rgba(255,255,255,0.38)",
-        borderBottom: "1px solid rgba(255,255,255,0.09)",
-        background: "rgba(255,255,255,0.02)",
+        textAlign: "center", padding: "18px 0",
+        fontSize: 11, letterSpacing: "0.26em", color: "var(--ink-3)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        background: "#141412", flexShrink: 0,
       }}>
         — SETTING UP YOUR NOTEBOOK —
       </div>
 
-      {/* Main 3-column area */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      {/* Main 3-column area — fills all space between topbar and footer */}
+      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
 
-        {/* Left: Contents — narrower, slightly lifted bg */}
+        {/* Left: Contents */}
         <div style={{
-          width: 160, borderRight: "1px solid rgba(255,255,255,0.09)",
-          padding: "44px 24px", display: "flex", flexDirection: "column",
-          background: "rgba(255,255,255,0.025)",
+          width: 200, flexShrink: 0,
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+          padding: "48px 28px 32px",
+          display: "flex", flexDirection: "column",
+          background: "#1e1e20",
         }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "rgba(255,255,255,0.4)", marginBottom: 28 }}>CONTENTS</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, flex: 1 }}>
+          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--ink-3)", marginBottom: 32 }}>CONTENTS</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 28, flex: 1 }}>
             {[
-              { s: 1, title: "About you",   sub: "Name & year" },
-              { s: 2, title: "Your school", sub: "School & start date" },
+              { s: 1, title: "About you",    sub: "Name & year" },
+              { s: 2, title: "Your school",  sub: "School & start date" },
               { s: 3, title: "Your classes", sub: "Add subjects" },
             ].map(({ s, title, sub }) => (
-              <div key={s} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <div key={s} style={{ display: "flex", gap: 13, alignItems: "flex-start" }}>
                 <div style={{
-                  width: 7, height: 7, borderRadius: "50%", marginTop: 5, flexShrink: 0,
-                  background: s === step ? "rgba(255,255,255,0.85)" : s < step ? "rgba(255,255,255,0.35)" : "transparent",
+                  width: 8, height: 8, borderRadius: "50%", marginTop: 4, flexShrink: 0,
+                  background: s === step ? "var(--ink)" : s < step ? "rgba(255,255,255,0.3)" : "transparent",
                   border: s === step ? "none" : "1px solid rgba(255,255,255,0.25)",
                 }} />
                 <div>
-                  <div style={{ fontSize: 14, color: s === step ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.38)", fontWeight: s === step ? 600 : 400 }}>{title}</div>
-                  <div style={{ fontSize: 11, color: s === step ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.22)", marginTop: 2 }}>{sub}</div>
+                  <div style={{
+                    fontSize: s === step ? 15 : 13,
+                    color: s === step ? "var(--ink)" : "var(--ink-2)",
+                    fontWeight: s === step ? 600 : 400,
+                    lineHeight: 1.3,
+                  }}>{title}</div>
+                  {s === step && <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 3 }}>{sub}</div>}
                 </div>
               </div>
             ))}
           </div>
           <button onClick={() => setStep(0)} style={{
             background: "none", border: "none", padding: 0, cursor: "pointer",
-            fontSize: 11.5, color: "rgba(255,255,255,0.35)", fontFamily: "inherit",
-            textAlign: "left", transition: "color 0.15s",
+            fontSize: 13, color: "var(--ink-3)", fontFamily: "inherit", textAlign: "left",
           }}>← back to cover</button>
         </div>
 
-        {/* Center: Preview — mid-tone bg so it reads as distinct */}
+        {/* Center: Preview — darkest panel, desk surface feel */}
         <div style={{
-          flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          gap: 20, borderRight: "1px solid rgba(255,255,255,0.09)", padding: "0 32px",
-          minHeight: 0, alignSelf: "stretch",
-          background: "rgba(255,255,255,0.015)",
+          flex: 1, minWidth: 0,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          gap: 20, padding: "40px 32px",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+          background: "#161618",
         }}>
-          <div className="mono" style={{ fontSize: 9.5, letterSpacing: "0.2em", color: "rgba(255,255,255,0.25)" }}>PREVIEW</div>
+          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--ink-3)" }}>PREVIEW</div>
           <PreviewCard />
         </div>
 
-        {/* Right: Form — slightly warmer bg */}
+        {/* Right: Form */}
         <div style={{
-          width: 480, padding: "56px 60px",
+          width: 380, flexShrink: 0,
+          padding: "48px 44px",
           display: "flex", flexDirection: "column", justifyContent: "center",
-          background: "rgba(255,255,255,0.035)",
+          background: "#212123",
+          overflowY: "auto",
         }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(255,255,255,0.4)", marginBottom: 18 }}>
+          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.18em", color: "var(--ink-3)", marginBottom: 20 }}>
             STEP {step} OF 3 — {stepLabels[step - 1].toUpperCase()}
           </div>
 
           {/* ── Step 1 ── */}
           {step === 1 && (
             <div>
-              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 44, lineHeight: 1.05, margin: "0 0 36px", fontWeight: 400, color: "#f0ece4" }}>
+              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 36, lineHeight: 1.1, margin: "0 0 32px", fontWeight: 400, color: "var(--ink)" }}>
                 Let's set up your <em>notebook.</em>
               </h2>
 
@@ -493,18 +511,18 @@ function Onboarding({ onComplete }) {
                   onChange={(e) => setName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && canNext1) setStep(2); }}
                   placeholder="e.g. Julian"
-                  style={bigDarkInput}
+                  style={darkInput}
                 />
               </OField>
 
               <OField label="What year are you in?" style={{ marginTop: 28 }} dark>
-                <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   {[["freshman","Freshman"],["sophomore","Sophomore"],["junior","Junior"],["senior","Senior"]].map(([k,l]) => (
                     <button key={k} onClick={() => setGrade(k)} style={{
-                      flex: 1, padding: "13px 4px", borderRadius: 6, fontSize: 13,
-                      border: "1px solid " + (grade === k ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)"),
-                      background: grade === k ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.05)",
-                      color: grade === k ? "#f0ece4" : "rgba(255,255,255,0.5)",
+                      flex: 1, height: 44, borderRadius: 6, fontSize: 13,
+                      border: "1px solid " + (grade === k ? "rgba(255,255,255,0.7)" : "#3a3a3e"),
+                      background: grade === k ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.03)",
+                      color: grade === k ? "var(--ink)" : "var(--ink-2)",
                       fontFamily: "inherit", cursor: "pointer", fontWeight: grade === k ? 600 : 400,
                       transition: "all 0.15s",
                     }}>{l}</button>
@@ -519,7 +537,7 @@ function Onboarding({ onComplete }) {
           {/* ── Step 2 ── */}
           {step === 2 && (
             <div>
-              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 44, lineHeight: 1.05, margin: "0 0 36px", fontWeight: 400, color: "#f0ece4" }}>
+              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 36, lineHeight: 1.1, margin: "0 0 32px", fontWeight: 400, color: "var(--ink)" }}>
                 Tell us about your <em>school.</em>
               </h2>
 
@@ -529,16 +547,16 @@ function Onboarding({ onComplete }) {
                   value={school}
                   onChange={(e) => setSchool(e.target.value)}
                   placeholder="e.g. Lincoln High School"
-                  style={bigDarkInput}
+                  style={darkInput}
                 />
               </OField>
 
               <OField label="When does your school year start?" style={{ marginTop: 28 }} dark>
-                <div style={{ display: "flex", gap: 12 }}>
-                  <select value={yearMonth} onChange={(e) => setYearMonth(Number(e.target.value))} style={{ ...bigDarkInput, flex: 2 }}>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <select value={yearMonth} onChange={(e) => setYearMonth(Number(e.target.value))} style={{ ...darkInput, flex: 2, height: 48, padding: "0 12px" }}>
                     {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
                   </select>
-                  <select value={yearYear} onChange={(e) => setYearYear(Number(e.target.value))} style={{ ...bigDarkInput, flex: 1 }}>
+                  <select value={yearYear} onChange={(e) => setYearYear(Number(e.target.value))} style={{ ...darkInput, flex: 1, height: 48, padding: "0 12px" }}>
                     {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
@@ -551,14 +569,14 @@ function Onboarding({ onComplete }) {
           {/* ── Step 3 ── */}
           {step === 3 && (
             <div>
-              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 44, lineHeight: 1.05, margin: "0 0 8px", fontWeight: 400, color: "#f0ece4" }}>
+              <h2 style={{ fontFamily: "var(--f-display)", fontSize: 36, lineHeight: 1.1, margin: "0 0 6px", fontWeight: 400, color: "var(--ink)" }}>
                 What classes are you <em>taking?</em>
               </h2>
-              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", margin: "0 0 24px", lineHeight: 1.5 }}>
+              <p style={{ fontSize: 14, color: "var(--ink-3)", margin: "0 0 24px", lineHeight: 1.5 }}>
                 Add up to 10. You can change these later.
               </p>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 280, overflowY: "auto", paddingRight: 4 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 260, overflowY: "auto", paddingRight: 4 }}>
                 {subjects.map((s, i) => (
                   <div key={s.tempId} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ position: "relative", flexShrink: 0 }}>
@@ -567,15 +585,15 @@ function Onboarding({ onComplete }) {
                       {colorPicker === s.tempId && (
                         <div style={{
                           position: "absolute", top: 38, left: 0, zIndex: 10,
-                          background: "#1c1b19", border: "1px solid rgba(255,255,255,0.12)",
+                          background: "#252527", border: "1px solid #3a3a3e",
                           borderRadius: 7, padding: 10,
                           display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 5,
-                          boxShadow: "0 8px 24px -8px rgba(0,0,0,0.7)",
+                          boxShadow: "0 8px 24px -4px rgba(0,0,0,0.8)",
                         }}>
                           {PRESET_COLORS.map((c) => (
                             <div key={c} onClick={() => { updateSubject(s.tempId, { color: c }); setColorPicker(null); }}
                               style={{ width: 24, height: 24, borderRadius: 5, background: c, cursor: "pointer",
-                                outline: s.color === c ? "2px solid #e8e4dc" : "none", outlineOffset: 1 }} />
+                                outline: s.color === c ? "2px solid var(--ink)" : "none", outlineOffset: 1 }} />
                           ))}
                         </div>
                       )}
@@ -584,18 +602,22 @@ function Onboarding({ onComplete }) {
                       value={s.name}
                       onChange={(e) => updateSubject(s.tempId, { name: e.target.value })}
                       placeholder={`Class ${i + 1} (e.g. AP Biology)`}
-                      style={{ ...bigDarkInput, flex: 1, padding: "10px 14px" }}
+                      style={{ ...darkInput, flex: 1, height: 40, padding: "0 14px" }}
                     />
                     {subjects.length > 1 && (
                       <button onClick={() => removeSubject(s.tempId)}
-                        style={{ border: 0, background: "transparent", color: "rgba(255,255,255,0.35)", cursor: "pointer", fontSize: 18, padding: "0 4px" }}>×</button>
+                        style={{ border: 0, background: "transparent", color: "var(--ink-3)", cursor: "pointer", fontSize: 18, padding: "0 4px", lineHeight: 1 }}>×</button>
                     )}
                   </div>
                 ))}
               </div>
 
               {subjects.length < 10 && (
-                <button onClick={addSubject} style={{ ...oGhostBtn, marginTop: 12, fontSize: 13, padding: "8px 16px" }}>+ Add another class</button>
+                <button onClick={addSubject} style={{
+                  marginTop: 12, padding: "8px 16px", borderRadius: 6, fontSize: 13,
+                  border: "1px solid #3a3a3e", background: "transparent",
+                  color: "var(--ink-2)", fontFamily: "inherit", cursor: "pointer",
+                }}>+ Add another class</button>
               )}
 
               <NavRow canProceed={canFinish} onBack={() => setStep(2)} onNext={finish} nextLabel="Open my notebook →" />
@@ -606,9 +628,10 @@ function Onboarding({ onComplete }) {
 
       {/* Footer */}
       <div className="mono" style={{
-        textAlign: "center", padding: "16px 0",
-        fontSize: 10, letterSpacing: "0.22em", color: "rgba(255,255,255,0.2)",
+        textAlign: "center", padding: "16px 0", flexShrink: 0,
+        fontSize: 10, letterSpacing: "0.22em", color: "var(--ink-3)",
         borderTop: "1px solid rgba(255,255,255,0.08)",
+        background: "#141412",
       }}>
         ANNO MMXXVI · PRINTED FOR ONE READER
       </div>
@@ -620,8 +643,8 @@ function OField({ label, children, style, dark }) {
   return (
     <div style={style}>
       <div className="mono" style={{
-        fontSize: 11, letterSpacing: "0.12em", marginBottom: 9,
-        color: dark ? "rgba(255,255,255,0.5)" : "var(--ink-3)",
+        fontSize: 11, letterSpacing: "0.12em", marginBottom: 10,
+        color: "var(--ink-3)",
         textTransform: "uppercase",
       }}>{label}</div>
       {children}
