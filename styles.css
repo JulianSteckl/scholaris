@@ -664,3 +664,34 @@ body, html { margin: 0; padding: 0; }
 }
 .tl-trend-badge { transition: opacity 0.18s cubic-bezier(0.22,1,0.36,1); }
 .tl-tool-row-link:hover .tl-trend-badge { opacity: 1; filter: brightness(1.25); }
+
+/* ── Shared page entrance animations ────────────────────────────────────── */
+/* All easing: cubic-bezier(0.22,1,0.36,1) only — no bounces, no linear     */
+
+/* Page route-level crossfade */
+@keyframes pg-route-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+.pg-route-enter { animation: pg-route-in 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+
+/* Element entrance classes — delay set inline */
+.pg-header  { opacity:0; animation: tl-fade-up 0.6s  cubic-bezier(0.22,1,0.36,1) both; }
+.pg-stat    { opacity:0; animation: tl-fade-up 0.58s cubic-bezier(0.22,1,0.36,1) both; }
+.pg-section { opacity:0; animation: tl-fade-up 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+.pg-card    { opacity:0; animation: tl-row-up  0.52s cubic-bezier(0.22,1,0.36,1) both; }
+.pg-sidebar { opacity:0; animation: tl-slide-x 0.6s  cubic-bezier(0.22,1,0.36,1) both; }
+
+/* Card hover lift — 180ms enter, 140ms leave */
+.pg-card-lift {
+  transition: transform 0.18s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.18s cubic-bezier(0.22,1,0.36,1),
+              border-color 0.18s cubic-bezier(0.22,1,0.36,1);
+}
+.pg-card-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+.pg-card-lift:not(:hover) {
+  transition: transform 0.14s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.14s cubic-bezier(0.22,1,0.36,1),
+              border-color 0.14s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* Progress bar fill — scaleX from 0, transform-origin left */
+@keyframes pg-bar-scale { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+.pg-bar { transform-origin:left; animation: pg-bar-scale 1.2s cubic-bezier(0.22,1,0.36,1) both; }

@@ -154,7 +154,7 @@ function QuizzesContent({ onTakeQuiz }) {
       )}
 
       {/* ── PAGE HEADER ── */}
-      <div style={{ marginBottom: 22 }}>
+      <div className="pg-header" style={{ marginBottom: 22 }}>
         <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 5 }}>
           Study &amp; Practice · This Week
         </div>
@@ -176,7 +176,7 @@ function QuizzesContent({ onTakeQuiz }) {
       </div>
 
       {/* ── HERO STATS BAR ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 28 }}>
+      <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 28, animationDelay: "0.15s" }}>
         {[
           { label: "Quizzes This Week", numVal: totalUpcoming,  suffix: "",  sub: "upcoming",       isNum: true },
           { label: "Avg Score",   numVal: avgScore,   suffix: "%", textFallback: "—", sub: "last 4 results",  isNum: true,  accent: avgScore != null ? (avgScore >= 80 ? "var(--done)" : avgScore >= 65 ? "var(--accent)" : "var(--danger)") : null },
@@ -204,7 +204,7 @@ function QuizzesContent({ onTakeQuiz }) {
       </div>
 
       {/* ── TWO-COLUMN LAYOUT: main + sidebar ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 268px", gap: 22, alignItems: "start" }}>
+      <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "1fr 268px", gap: 22, alignItems: "start", animationDelay: "0.25s" }}>
 
         {/* ── LEFT MAIN ── */}
         <div>
@@ -1052,13 +1052,13 @@ function ScheduleContent() {
       />
 
       {/* AI Study Plan — primary hero */}
-      <AIStudyPlan />
+      <div className="pg-section" style={{ animationDelay: "0.15s" }}><AIStudyPlan /></div>
 
       {/* Workload heatmap + stats */}
-      <WorkloadHeatmap />
+      <div className="pg-section" style={{ animationDelay: "0.2s" }}><WorkloadHeatmap /></div>
 
       {/* Week calendar — Mon–Fri */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, marginBottom: 10 }}>
+      <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, marginBottom: 10, animationDelay: "0.3s" }}>
         {colDates.map((colDate, i) => <DayCard key={i} colDate={colDate} i={i} />)}
       </div>
 
@@ -2191,7 +2191,7 @@ function GradesContent() {
       ) : (
         <>
           {/* Metrics strip */}
-          <div style={{ display: "grid", gridTemplateColumns: gpaExpanded ? "1fr" : "auto 1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
+          <div className="pg-section" style={{ display: "grid", gridTemplateColumns: gpaExpanded ? "1fr" : "auto 1fr 1fr 1fr", gap: 10, marginBottom: 16, animationDelay: "0.15s" }}>
             <GpaCard />
             {!gpaExpanded && <>
             <MetricCard
@@ -2218,7 +2218,7 @@ function GradesContent() {
           </div>
 
           {/* Main: subject table + sidebar */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 256px", gap: 16, alignItems: "start" }}>
+          <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "1fr 256px", gap: 16, alignItems: "start", animationDelay: "0.25s" }}>
 
             {/* Subject table */}
             <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
@@ -3026,9 +3026,9 @@ function FlashcardsContent({ onTakeQuiz }) {
         </div>
       ) : (
         <>
-          <MetricsStrip />
+          <div className="pg-section" style={{ animationDelay: "0.15s" }}><MetricsStrip /></div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 256px", gap: 16, alignItems: "start" }}>
+          <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "1fr 256px", gap: 16, alignItems: "start", animationDelay: "0.25s" }}>
             {/* Left: Today's review + all decks */}
             <div>
               <TodayReviewPanel />
@@ -3543,10 +3543,10 @@ function NotesIndexContent({ onOpenSubject, onOpenNote }) {
         </>}
       />
 
-      <MetricsStrip />
-      <SearchBar />
+      <div className="pg-section" style={{ animationDelay: "0.15s" }}><MetricsStrip /></div>
+      <div className="pg-section" style={{ animationDelay: "0.2s" }}><SearchBar /></div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 256px", gap: 16, alignItems: "start" }}>
+      <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "1fr 256px", gap: 16, alignItems: "start", animationDelay: "0.28s" }}>
         {/* Left */}
         <div>
           <RecentNotesSection />

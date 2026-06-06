@@ -193,7 +193,7 @@ function HomeworkContent() {
   return (
     <>
       {/* ── PAGE HEADER ── */}
-      <div style={{ marginBottom: 22 }}>
+      <div className="pg-header" style={{ marginBottom: 22 }}>
         <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 5 }}>
           Workload · This Week
         </div>
@@ -234,7 +234,7 @@ function HomeworkContent() {
       </div>
 
       {/* ── METRICS ROW ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 22 }}>
+      <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 22, animationDelay: "0.15s" }}>
         {[
           { label: "Open Work",  numVal: openHW.length,   suffix: "", sub: "assignments",    isNum: true },
           { label: "Urgent",     numVal: urgentHW.length, suffix: "", sub: "need attention", isNum: true,  accent: urgentHW.length > 0 ? "var(--danger)" : null },
@@ -262,9 +262,9 @@ function HomeworkContent() {
 
       {/* ── TODAY'S FOCUS ── */}
       {priorities.length > 0 && (
-        <div style={{
+        <div className="pg-section" style={{
           background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)",
-          padding: "18px 20px", marginBottom: 22,
+          padding: "18px 20px", marginBottom: 22, animationDelay: "0.25s",
         }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -319,7 +319,7 @@ function HomeworkContent() {
       )}
 
       {/* ── MAIN GRID: Kanban + Side Panel ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 228px", gap: 18, marginBottom: 24 }}>
+      <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "1fr 228px", gap: 18, marginBottom: 24, animationDelay: "0.35s" }}>
 
         {/* ── KANBAN BOARD ── */}
         <div>
