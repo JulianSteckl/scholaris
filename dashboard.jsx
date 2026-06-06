@@ -660,7 +660,7 @@ function DashCombined({ view, headerWidget = "stats" }) {
       {W("week-strip") && (() => {
         const liveWeek = buildLiveWeek(allHW, allQuizzes);
         return (
-          <div className="sched-strip" style={{ marginBottom: 22 }}>
+          <div className="sched-strip pg-section" style={{ marginBottom: 22, animationDelay: "0.15s" }}>
             {liveWeek.map((d) => {
               const todayProgress = d.today ? (() => {
                 const n = new Date();
@@ -700,6 +700,7 @@ function DashCombined({ view, headerWidget = "stats" }) {
 
       {/* Up-next hero — full width */}
       {W("up-next") && (() => {
+        // Animation: pg-section delay 0.25s applied to the card wrapper below
         // Build live chips from real data for the featured subject
         const subjId = featured.subject;
         const subjHW = subjId ? allHW.filter(h => h.subject === subjId && !h.done) : [];
@@ -723,7 +724,7 @@ function DashCombined({ view, headerWidget = "stats" }) {
         // Right-side content: countdown or next-day summary
         const nextDayHW = allHW.filter(h => !h.done).slice(0, 2);
         return (
-          <div className="sn-card" style={{ display: "flex", gap: 18, alignItems: "stretch", marginBottom: 20 }}>
+          <div className="sn-card pg-section" style={{ display: "flex", gap: 18, alignItems: "stretch", marginBottom: 20, animationDelay: "0.25s" }}>
             <div style={{ width: 6, borderRadius: 3, background: featuredColor }}></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "var(--f-mono)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-3)" }}>{eyebrow}</div>
@@ -772,10 +773,10 @@ function DashCombined({ view, headerWidget = "stats" }) {
       })()}
 
       {/* AI Game Plan */}
-      {W("ai-plan") && <AIDayPlan />}
+      {W("ai-plan") && <div className="pg-section" style={{ animationDelay: "0.3s" }}><AIDayPlan /></div>}
 
       {/* Three-column body */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 0.9fr", gap: 18, alignItems: "start" }}>
+      <div className="pg-section" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 0.9fr", gap: 18, alignItems: "start", animationDelay: "0.35s" }}>
         {/* Col 1 — Homework + Quizzes */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="dash-zone-label">Workload</div>

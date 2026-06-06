@@ -261,7 +261,7 @@ function Topbar({ streak = nbGetStreak(), placeholder = "Search notes, homework,
 
 function PageHeader({ eyebrow, title, italic, meta, actions, aside }) {
   return (
-    <div className={`sn-pageheader${aside ? " has-aside" : ""}`}>
+    <div className={`sn-pageheader pg-header${aside ? " has-aside" : ""}`}>
       <div className="titleblock">
         {eyebrow && <div className="eyebrow">{eyebrow}</div>}
         <h1>
@@ -308,8 +308,30 @@ function ConfidenceMeter({ value }) {
   window.dispatchEvent(new CustomEvent("nbThemeApplied", { detail: { accent: vars["--accent"] } }));
 })();
 
-function StatNumber({ value, suffix = "", prefix = "" }) {
-  return <>{prefix}{value != null ? value : "—"}{suffix}</>;
+function StatNumber({ value, suffix = "", prefix = "", delay = 0, duration = 1000 }) {
+  const numVal = typeof value === "number" ? value : parseFloat(value);
+  const isNum  = !isNaN(numVal) && value != null;
+  const [disp, setDisp] = React.useState(isNum ? 0 : value);
+
+  React.useEffect(function() {
+    if (!isNum) { setDisp(value); return; }
+    var raf;
+    var startTime = null;
+    function run(ts) {
+      if (startTime === null) startTime = ts;
+      var elapsed = ts - startTime - delay;
+      if (elapsed < 0) { raf = requestAnimationFrame(run); return; }
+      var t = Math.min(elapsed / duration, 1);
+      var eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      setDisp(Math.round(eased * numVal));
+      if (t < 1) raf = requestAnimationFrame(run);
+      else setDisp(numVal);
+    }
+    raf = requestAnimationFrame(run);
+    return function() { cancelAnimationFrame(raf); };
+  }, [numVal, delay, duration]);
+
+  return <>{prefix}{isNum ? disp : (value != null ? value : "—")}{suffix}</>;
 }
 
 Object.assign(window, { Ico, Sidebar, Topbar, PageHeader, SubjectDot, ConfidenceMeter, SubjectGlyph, StatNumber });
