@@ -4068,17 +4068,25 @@ function formatActivity(rawActivity) {
     };
   }).filter(function(a) { return a.group !== "older"; });
 
-  // Deduplicate: collapse consecutive same-tool opens within the same group
-  var deduped = [];
+  // Deduplicate: collapse ALL same-tool entries within the same time group (not just consecutive)
+  var buckets = {};
   mapped.forEach(function(item) {
-    var last = deduped[deduped.length - 1];
-    if (last && last.toolId === item.toolId && last.group === item.group) {
-      last.count = (last.count || 1) + 1;
-      last.label = "Opened " + item.tool + " · " + last.count + "×";
+    var key = item.group + ":" + item.toolId;
+    if (!buckets[key]) {
+      buckets[key] = Object.assign({}, item, { count: 1 });
     } else {
-      deduped.push(Object.assign({}, item, { count: 1 }));
+      buckets[key].count += 1;
+      // keep the most-recent timestamp so ordering is correct
+      if (item.ts > buckets[key].ts) buckets[key].ts = item.ts;
     }
   });
+  var deduped = Object.values(buckets).map(function(item) {
+    return Object.assign({}, item, {
+      label: item.count > 1 ? "Opened " + item.tool + " · " + item.count + "×" : "Opened " + item.tool,
+    });
+  });
+  // Sort each group by most-recent first
+  deduped.sort(function(a, b) { return b.ts - a.ts; });
   return deduped;
 }
 
@@ -4151,7 +4159,7 @@ function ToolIcon({ id, color, size = 20 }) {
 }
 
 // ── Bar sparkline ──────────────────────────────────────────────────────────────
-function BarSparkline({ bars, color }) {
+function BarSparkline({ bars, color, rowIndex }) {
   const max = Math.max(...bars, 1);
   const BW = 5, GAP = 2, H = 28;
   const W = bars.length * BW + (bars.length - 1) * GAP;
@@ -4160,27 +4168,30 @@ function BarSparkline({ bars, color }) {
       {bars.map((v, i) => {
         const h = Math.max(2, (v / max) * H);
         const opacity = i === bars.length - 1 ? 0.85 : 0.22 + (i / bars.length) * 0.45;
-        return <rect key={i} x={i * (BW + GAP)} y={H - h} width={BW} height={h} rx="1.5" fill={color} opacity={opacity} />;
+        const delay = (0.45 + (rowIndex || 0) * 0.05 + i * 0.03) + "s";
+        return <rect key={i} className="tl-bar" x={i * (BW + GAP)} y={H - h} width={BW} height={h} rx="1.5" fill={color} opacity={opacity} style={{ animationDelay: delay }} />;
       })}
     </svg>
   );
 }
 
 // ── Tool row ───────────────────────────────────────────────────────────────────
-function ToolRow({ tool }) {
+function ToolRow({ tool, rowIndex }) {
   const [hov, setHov] = React.useState(false);
   const COL = "1fr 110px 68px 82px 60px";
   return (
     <a href={tool.url} target="_blank" rel="noopener noreferrer"
       onClick={() => recordToolOpen(tool.id)}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      className="tl-tool-row tl-tool-row-link"
       style={{
         display: "grid", gridTemplateColumns: COL, alignItems: "center",
         padding: "11px 16px", gap: 12,
         background: hov ? C.bg2 : "transparent",
         borderBottom: "1px solid " + C.border,
         textDecoration: "none", color: "inherit",
-        transition: "background 0.13s", cursor: "pointer",
+        cursor: "pointer",
+        animationDelay: (0.45 + (rowIndex || 0) * 0.05) + "s",
       }}>
       {/* Tool identity */}
       <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
@@ -4195,7 +4206,7 @@ function ToolRow({ tool }) {
             <span style={{ fontFamily: "var(--f-display)", fontSize: 14.5, color: C.ink, fontStyle: "italic", lineHeight: 1 }}>{tool.name}</span>
             <span style={{ fontFamily: "var(--f-mono)", fontSize: 7.5, textTransform: "uppercase", letterSpacing: "0.1em",
               color: C.ink3, background: C.bg2, border: "1px solid " + C.border, padding: "1px 5px", borderRadius: 3 }}>{tool.category}</span>
-            {tool.delta && <span style={{ fontFamily: "var(--f-mono)", fontSize: 7.5,
+            {tool.delta && <span className="tl-trend-badge" style={{ fontFamily: "var(--f-mono)", fontSize: 7.5,
               color: C.green, background: C.green + "14", border: "1px solid " + C.green + "30",
               padding: "1px 5px", borderRadius: 3 }}>{tool.delta}</span>}
             {tool.trending && <span style={{ fontFamily: "var(--f-mono)", fontSize: 7, textTransform: "uppercase",
@@ -4207,7 +4218,7 @@ function ToolRow({ tool }) {
       </div>
       {/* Bar chart */}
       <div>
-        <BarSparkline bars={tool.bars} color={tool.color} />
+        <BarSparkline bars={tool.bars} color={tool.color} rowIndex={rowIndex} />
         {tool.delta && <div style={{ fontFamily: "var(--f-mono)", fontSize: 8, color: C.ink3, marginTop: 3 }}>{tool.delta} this wk</div>}
       </div>
       {/* Sessions */}
@@ -4225,9 +4236,9 @@ function ToolRow({ tool }) {
           ? <span style={{ fontFamily: "var(--f-mono)", fontSize: 8, textTransform: "uppercase", letterSpacing: "0.08em",
               color: C.ink3, opacity: 0.55, padding: "3px 0" }}>new</span>
           : tool.trending
-            ? <span style={{ fontFamily: "var(--f-mono)", fontSize: 9,
+            ? <span className="tl-trend-pulse tl-trend-badge" style={{ fontFamily: "var(--f-mono)", fontSize: 9,
                 color: C.green, background: C.green + "14", border: "1px solid " + C.green + "28",
-                padding: "2px 6px", borderRadius: 4 }}>↑ {tool.delta}</span>
+                padding: "2px 6px", borderRadius: 4, animationDelay: (0.9 + (rowIndex || 0) * 0.05) + "s" }}>↑ {tool.delta}</span>
             : <span style={{ fontFamily: "var(--f-mono)", fontSize: 10,
                 color: tool.trendUp ? C.green : (tool.trend === "—" ? C.ink3 : C.red) }}>{tool.trend}</span>
         }
@@ -4259,7 +4270,7 @@ function StatsStrip({ tools, activity }) {
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 16 }}>
       {items.map(function(s, i) {
         return (
-          <div key={i} style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, padding: "13px 15px" }}>
+          <div key={i} className="tl-stat-card" style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, padding: "13px 15px", animationDelay: (i * 0.1) + "s" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
               <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.1em", color: C.ink3 }}>{s.label}</span>
             </div>
@@ -4314,7 +4325,7 @@ function SuggestionRow({ s, isLast }) {
 
 function SuggestionsPanel({ suggestions }) {
   return (
-    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", marginBottom: 16 }}>
+    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", height: "100%" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid " + C.border, background: C.bg2 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
           <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.green }} />
@@ -4367,7 +4378,7 @@ function QLRow({ ql, isLast }) {
 
 function QuickLaunchPanel() {
   return (
-    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
+    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2 }}>
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink2 }}>Quick Launch</span>
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: C.ink3 }}>⌘1–4</span>
@@ -4385,6 +4396,7 @@ function ActRow({ item }) {
   const [hov, setHov] = React.useState(false);
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      className="tl-act-entry"
       style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 14px",
         background: hov ? C.bg2 : "transparent", transition: "background 0.13s" }}>
       <div style={{ width: 5, height: 5, borderRadius: "50%", background: item.color, flexShrink: 0, marginTop: 4 }} />
@@ -4397,7 +4409,7 @@ function ActRow({ item }) {
   );
 }
 
-function ActivityPanel({ activity }) {
+function ActivityPanel({ activity, flex }) {
   const groups = [
     { key: "justnow",   label: "Just Now"   },
     { key: "today",     label: "Today"      },
@@ -4405,26 +4417,28 @@ function ActivityPanel({ activity }) {
   ];
   const hasAny = activity && activity.length > 0;
   return (
-    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2 }}>
+    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", ...(flex ? { flex: 1, display: "flex", flexDirection: "column", minHeight: 0, marginBottom: 0 } : { marginBottom: 10 }) }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2, flexShrink: 0 }}>
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink2 }}>· Activity</span>
         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
           <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.green }} />
           <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: C.green }}>Live</span>
         </div>
       </div>
-      {hasAny ? groups.map(function(g) {
-        const items = activity.filter(function(a) { return a.group === g.key; });
-        if (!items.length) return null;
-        return (
-          <div key={g.key}>
-            <div style={{ fontFamily: "var(--f-mono)", fontSize: 7.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink3, padding: "7px 14px 2px" }}>· {g.label}</div>
-            {items.map(function(a) { return <ActRow key={a.id} item={a} />; })}
-          </div>
-        );
-      }) : (
-        <div style={{ padding: "16px 14px", fontFamily: "var(--f-mono)", fontSize: 11, color: C.ink3, textAlign: "center" }}>No activity yet. Open a tool to start tracking.</div>
-      )}
+      <div className="activity-scroll" style={flex ? { flex: 1, overflowY: "auto", minHeight: 0 } : { maxHeight: 200, overflowY: "auto" }}>
+        {hasAny ? groups.map(function(g) {
+          const items = activity.filter(function(a) { return a.group === g.key; });
+          if (!items.length) return null;
+          return (
+            <div key={g.key}>
+              <div style={{ fontFamily: "var(--f-mono)", fontSize: 7.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink3, padding: "7px 14px 2px" }}>· {g.label}</div>
+              {items.map(function(a) { return <ActRow key={a.id} item={a} />; })}
+            </div>
+          );
+        }) : (
+          <div style={{ padding: "16px 14px", fontFamily: "var(--f-mono)", fontSize: 11, color: C.ink3, textAlign: "center" }}>No activity yet. Open a tool to start tracking.</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -4456,12 +4470,15 @@ function UsageRow({ u, isLast, maxSessions }) {
   );
 }
 
-function UsageBreakdownPanel({ tools }) {
+function UsageBreakdownPanel({ tools, fill }) {
   const top4 = tools.filter(function(t) { return t.sessions > 0; }).slice(0, 4);
   const maxSessions = top4.length > 0 ? top4[0].sessions : 1;
+  const outer = fill
+    ? { background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1 }
+    : { background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden" };
   return (
-    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2 }}>
+    <div style={outer}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2, flexShrink: 0 }}>
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink2 }}>Usage Breakdown</span>
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: C.ink3 }}>all time</span>
       </div>
@@ -4474,7 +4491,7 @@ function UsageBreakdownPanel({ tools }) {
 }
 
 // ── Usage Insight panel ────────────────────────────────────────────────────────
-function UsageInsightPanel({ tools }) {
+function UsageInsightPanel({ tools, fill }) {
   const used = tools.filter(function(t) { return t.sessions > 0; });
   var insight = null;
   if (used.length >= 2) {
@@ -4488,9 +4505,12 @@ function UsageInsightPanel({ tools }) {
         + (alt ? " Consider exploring " + alt.name + " for study sessions." : "");
     }
   }
+  const outer = fill
+    ? { background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1 }
+    : { background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden" };
   return (
-    <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2 }}>
+    <div style={outer}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", borderBottom: "1px solid " + C.border, background: C.bg2, flexShrink: 0 }}>
         <span style={{ fontFamily: "var(--f-display)", fontStyle: "italic", fontSize: 11, color: "var(--accent)", marginRight: 2 }}>✦</span>
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink2 }}>Usage Insight</span>
       </div>
@@ -4507,6 +4527,20 @@ function UsageInsightPanel({ tools }) {
 // ── ToolsContent ───────────────────────────────────────────────────────────────
 function ToolsContent() {
   const [filter, setFilter] = React.useState("All");
+  const tableRef = React.useRef(null);
+  const sidebarRef = React.useRef(null);
+
+  // Match sidebar height to tool table height after every render
+  React.useLayoutEffect(function() {
+    function sync() {
+      if (tableRef.current && sidebarRef.current) {
+        sidebarRef.current.style.height = tableRef.current.offsetHeight + "px";
+      }
+    }
+    sync();
+    window.addEventListener("resize", sync);
+    return function() { window.removeEventListener("resize", sync); };
+  });
   const { statsMap, activity } = useToolStats();
 
   const tools       = mergeTools(statsMap);
@@ -4531,9 +4565,17 @@ function ToolsContent() {
       />
 
       <StatsStrip tools={tools} activity={activity} />
-      <SuggestionsPanel suggestions={suggestions} />
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      {/* Suggestions (60%) + Usage panels (40%) side by side */}
+      <div className="tl-panels-row" style={{ display: "flex", flexDirection: "row", alignItems: "stretch", gap: 16, marginBottom: 16, animationDelay: "0.2s" }}>
+        <div style={{ flex: "3", minWidth: 0 }}><SuggestionsPanel suggestions={suggestions} /></div>
+        <div style={{ flex: "2", minWidth: 0, display: "flex", flexDirection: "row", alignItems: "stretch", gap: 8 }}>
+          <div style={{ flex: "55", display: "flex", flexDirection: "column" }}><UsageBreakdownPanel tools={tools} fill /></div>
+          <div style={{ flex: "45", display: "flex", flexDirection: "column" }}><UsageInsightPanel tools={tools} fill /></div>
+        </div>
+      </div>
+
+      <div className="tl-filter-tabs" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, animationDelay: "0.35s" }}>
         <div style={{ display: "flex", gap: 6 }}>
           {categories.map(function(cat) {
             return (
@@ -4554,23 +4596,44 @@ function ToolsContent() {
         <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: C.ink3 }}>{filtered.length} tools</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 256px", gap: 16, alignItems: "start" }}>
-        {/* Tool table */}
-        <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden" }}>
-          <div style={{ display: "grid", gridTemplateColumns: COL_HDR, padding: "8px 16px", borderBottom: "1px solid " + C.border, gap: 12, background: C.bg2 }}>
+      <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+        {/* Tool table — natural content height */}
+        <div ref={tableRef} style={{ flex: 1, minWidth: 0, background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden" }}>
+          <div className="tl-table-header" style={{ display: "grid", gridTemplateColumns: COL_HDR, padding: "8px 16px", borderBottom: "1px solid " + C.border, gap: 12, background: C.bg2, animationDelay: "0.4s" }}>
             {[["Tool","left"],["To Activity","left"],["Sessions","right"],["Last Used","right"],["Trend","right"]].map(function(pair) {
               return <div key={pair[0]} style={{ fontFamily: "var(--f-mono)", fontSize: 7.5, textTransform: "uppercase", letterSpacing: "0.1em", color: C.ink3, textAlign: pair[1] }}>{pair[0]}</div>;
             })}
           </div>
-          {filtered.map(function(tool) { return <ToolRow key={tool.id} tool={tool} />; })}
+          {filtered.map(function(tool, i) { return <ToolRow key={tool.id} tool={tool} rowIndex={i} />; })}
         </div>
 
-        {/* Sidebar */}
-        <div>
+        {/* Sidebar — height set to match tool table via JS ref */}
+        <div ref={sidebarRef} className="tl-sidebar" style={{ width: 256, display: "flex", flexDirection: "column", gap: 12, overflow: "hidden", animationDelay: "0.3s" }}>
           <QuickLaunchPanel />
-          <ActivityPanel activity={activityFmt} />
-          <UsageBreakdownPanel tools={tools} />
-          <UsageInsightPanel tools={tools} />
+          <div style={{ background: C.surface, border: "1px solid " + C.border, borderRadius: 8, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid " + C.border, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg2, flexShrink: 0 }}>
+              <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink2 }}>· Activity</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.green }} />
+                <span style={{ fontFamily: "var(--f-mono)", fontSize: 8.5, color: C.green }}>Live</span>
+              </div>
+            </div>
+            <div className="activity-scroll" style={{ overflowY: "auto", flex: 1, minHeight: 0, scrollbarWidth: "none", msOverflowStyle: "none" }}>
+              {activityFmt && activityFmt.length > 0
+                ? [{ key: "justnow", label: "Just Now" }, { key: "today", label: "Today" }, { key: "yesterday", label: "Yesterday" }].map(function(g) {
+                    var items = activityFmt.filter(function(a) { return a.group === g.key; });
+                    if (!items.length) return null;
+                    return (
+                      <div key={g.key}>
+                        <div style={{ fontFamily: "var(--f-mono)", fontSize: 7.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.ink3, padding: "7px 14px 2px" }}>· {g.label}</div>
+                        {items.map(function(a) { return <ActRow key={a.id} item={a} />; })}
+                      </div>
+                    );
+                  })
+                : <div style={{ padding: "16px 14px", fontFamily: "var(--f-mono)", fontSize: 11, color: C.ink3, textAlign: "center" }}>No activity yet. Open a tool to start tracking.</div>
+              }
+            </div>
+          </div>
         </div>
       </div>
     </>

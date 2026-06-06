@@ -579,3 +579,88 @@ body, html { margin: 0; padding: 0; }
 .sn-drawer-enter { /* no animation */ }
 .sn-reveal { opacity: 1; }
 .sn-reveal.visible { /* no animation */ }
+
+/* Activity feed — hide scrollbar, keep scrolling */
+.activity-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.activity-scroll::-webkit-scrollbar { display: none; }
+
+/* ── Tools page animations ──────────────────────────────────────────────── */
+/* All easing: cubic-bezier(0.22, 1, 0.36, 1) — organic deceleration only  */
+
+@keyframes tl-fade-up  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+@keyframes tl-row-up   { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+@keyframes tl-slide-x  { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:none; } }
+@keyframes tl-bar-grow { from { transform:scaleY(0); }                    to { transform:scaleY(1); } }
+@keyframes tl-pulse    { 0%,100%{ transform:scale(1); } 45%{ transform:scale(1.08); } }
+@keyframes tl-act-in   { from { opacity:0; transform:translateY(-8px); }  to { opacity:1; transform:none; } }
+
+/* Stat cards: fade-up, 600ms, stagger set inline */
+.tl-stat-card {
+  opacity: 0;
+  animation: tl-fade-up 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Suggestions + Usage row: fade-up from 14px, 650ms */
+.tl-panels-row {
+  opacity: 0;
+  animation: tl-fade-up 0.65s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Filter tabs: fade-up, 500ms */
+.tl-filter-tabs {
+  opacity: 0;
+  animation: tl-fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Table header: fade-up, 500ms */
+.tl-table-header {
+  opacity: 0;
+  animation: tl-fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Tool rows: row-up from 10px, 550ms, stagger set inline */
+.tl-tool-row {
+  opacity: 0;
+  animation: tl-row-up 0.55s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Sidebar: slide in from +12px on X, 600ms */
+.tl-sidebar {
+  opacity: 0;
+  animation: tl-slide-x 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Sparkline bars — scaleY from 0, 800ms, transform-origin bottom */
+.tl-bar {
+  transform-origin: bottom;
+  animation: tl-bar-grow 0.8s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Trend badge — single pulse scale 1→1.08→1, 600ms, fires after row enters */
+.tl-trend-pulse {
+  display: inline-block;
+  animation: tl-pulse 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Activity new-entry: slide down from -8px, 400ms */
+.tl-act-entry {
+  animation: tl-act-in 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Tool row hover: lift + shadow, brighten trend badge */
+.tl-tool-row-link {
+  transition: background 0.18s cubic-bezier(0.22,1,0.36,1),
+              transform  0.18s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.18s cubic-bezier(0.22,1,0.36,1);
+}
+.tl-tool-row-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.tl-tool-row-link:not(:hover) {
+  transition: background 0.14s cubic-bezier(0.22,1,0.36,1),
+              transform  0.14s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.14s cubic-bezier(0.22,1,0.36,1);
+}
+.tl-trend-badge { transition: opacity 0.18s cubic-bezier(0.22,1,0.36,1); }
+.tl-tool-row-link:hover .tl-trend-badge { opacity: 1; filter: brightness(1.25); }
